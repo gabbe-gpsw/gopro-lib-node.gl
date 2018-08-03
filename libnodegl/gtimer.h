@@ -24,7 +24,12 @@
 
 #include <stdint.h>
 
+#ifdef VULKAN_BACKEND
+#include <vulkan/vulkan.h>
+#else
 #include "glincludes.h"
+#endif
+
 #include "nodes.h"
 
 struct ngl_ctx;
@@ -33,6 +38,11 @@ struct gtimer {
     struct ngl_ctx *ctx;
 
     int started;
+#ifdef VULKAN_BACKEND
+    //VkCommandPool command_pool;
+    VkQueryPool query_pool;
+    uint64_t results[2];
+#else
     GLuint query;
     GLuint64 query_result;
     void (*glGenQueries)(const struct glcontext *gl, GLsizei n, GLuint * ids);
@@ -40,6 +50,7 @@ struct gtimer {
     void (*glBeginQuery)(const struct glcontext *gl, GLenum target, GLuint id);
     void (*glEndQuery)(const struct glcontext *gl, GLenum target);
     void (*glGetQueryObjectui64v)(const struct glcontext *gl, GLuint id, GLenum pname, GLuint64 *params);
+#endif
 };
 
 int ngli_gtimer_init(struct gtimer *s, struct ngl_ctx *ctx);

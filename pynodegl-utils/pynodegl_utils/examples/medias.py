@@ -13,7 +13,8 @@ def centered_media(cfg, uv_corner=(0, 0), uv_width=(1, 0), uv_height=(0, 1), pro
     cfg.aspect_ratio = (m0.width, m0.height)
 
     q = ngl.Quad((-1, -1, 0), (2, 0, 0), (0, 2, 0), uv_corner, uv_width, uv_height)
-    m = ngl.Media(m0.filename)
+    m = ngl.Media(m0.filename, stream_idx=1, max_nb_frames=8)
+
     t = ngl.Texture2D(data_src=m)
     p = ngl.Program()
     render = ngl.Render(q, p)

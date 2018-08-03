@@ -100,6 +100,74 @@ int ngli_format_get_nb_comp(int format)
     return format_comp_sizes[format].nb_comp;
 }
 
+#ifdef VULKAN_BACKEND
+static const struct entry {
+    const char *glsl_format;
+    VkFormat format;
+} format_map[] = {
+    [NGLI_FORMAT_UNDEFINED]            = {NULL,           VK_FORMAT_UNDEFINED},
+    [NGLI_FORMAT_R8_UNORM]             = {"r8",           VK_FORMAT_R8_UNORM},
+    [NGLI_FORMAT_R8_SNORM]             = {"r8_snorm",     VK_FORMAT_R8_SNORM},
+    [NGLI_FORMAT_R8_UINT]              = {"r8_ui",        VK_FORMAT_R8_UINT},
+    [NGLI_FORMAT_R8_SINT]              = {"r8_i",         VK_FORMAT_R8_SINT},
+    [NGLI_FORMAT_R8G8_UNORM]           = {"rg8",          VK_FORMAT_R8G8_UNORM},
+    [NGLI_FORMAT_R8G8_SNORM]           = {"rg8_snorm",    VK_FORMAT_R8G8_SNORM},
+    [NGLI_FORMAT_R8G8_UINT]            = {"rg8_ui",       VK_FORMAT_R8G8_UINT},
+    [NGLI_FORMAT_R8G8_SINT]            = {"rg8_i",        VK_FORMAT_R8G8_SINT},
+    [NGLI_FORMAT_R8G8B8_UNORM]         = {NULL,           VK_FORMAT_R8G8B8_UNORM},
+    [NGLI_FORMAT_R8G8B8_SNORM]         = {NULL,           VK_FORMAT_R8G8B8_SNORM},
+    [NGLI_FORMAT_R8G8B8_UINT]          = {NULL,           VK_FORMAT_R8G8B8_UINT},
+    [NGLI_FORMAT_R8G8B8_SINT]          = {NULL,           VK_FORMAT_R8G8B8_SINT},
+    [NGLI_FORMAT_R8G8B8_SRGB]          = {NULL,           VK_FORMAT_R8G8B8_SRGB},
+    [NGLI_FORMAT_R8G8B8A8_UNORM]       = {"rgba8",        VK_FORMAT_R8G8B8A8_UNORM},
+    [NGLI_FORMAT_R8G8B8A8_SNORM]       = {"rgba8_snorm",  VK_FORMAT_R8G8B8A8_SNORM},
+    [NGLI_FORMAT_R8G8B8A8_UINT]        = {"rgba8ui",      VK_FORMAT_R8G8B8A8_UINT},
+    [NGLI_FORMAT_R8G8B8A8_SINT]        = {"rgba8i",       VK_FORMAT_R8G8B8A8_SINT},
+    [NGLI_FORMAT_R8G8B8A8_SRGB]        = {NULL,           VK_FORMAT_R8G8B8A8_SRGB},
+    [NGLI_FORMAT_B8G8R8A8_UNORM]       = {"rgba8",        VK_FORMAT_B8G8R8A8_UNORM},
+    [NGLI_FORMAT_B8G8R8A8_SNORM]       = {"rgba8_snorm",  VK_FORMAT_B8G8R8A8_SNORM},
+    [NGLI_FORMAT_B8G8R8A8_UINT]        = {"rgba8ui",      VK_FORMAT_B8G8R8A8_UINT},
+    [NGLI_FORMAT_B8G8R8A8_SINT]        = {"rgba8i",       VK_FORMAT_B8G8R8A8_SINT},
+    [NGLI_FORMAT_R16_UNORM]            = {"r16",          VK_FORMAT_R16_UNORM},
+    [NGLI_FORMAT_R16_SNORM]            = {"r16_snorm",    VK_FORMAT_R16_SNORM},
+    [NGLI_FORMAT_R16_UINT]             = {"r16ui",        VK_FORMAT_R16_UINT},
+    [NGLI_FORMAT_R16_SINT]             = {"r16i",         VK_FORMAT_R16_SINT},
+    [NGLI_FORMAT_R16_SFLOAT]           = {"r16f",         VK_FORMAT_R16_SFLOAT},
+    [NGLI_FORMAT_R16G16_UNORM]         = {"rg16",         VK_FORMAT_R16G16_UNORM},
+    [NGLI_FORMAT_R16G16_SNORM]         = {"rg16_snorm",   VK_FORMAT_R16G16_SNORM},
+    [NGLI_FORMAT_R16G16_UINT]          = {"rg16ui",       VK_FORMAT_R16G16_UINT},
+    [NGLI_FORMAT_R16G16_SINT]          = {"rg16i",        VK_FORMAT_R16G16_SINT},
+    [NGLI_FORMAT_R16G16_SFLOAT]        = {"rg16f",        VK_FORMAT_R16G16_SFLOAT},
+    [NGLI_FORMAT_R16G16B16_UNORM]      = {NULL,           VK_FORMAT_R16G16B16_UNORM},
+    [NGLI_FORMAT_R16G16B16_SNORM]      = {NULL,           VK_FORMAT_R16G16B16_SNORM},
+    [NGLI_FORMAT_R16G16B16_UINT]       = {NULL,           VK_FORMAT_R16G16B16_UINT},
+    [NGLI_FORMAT_R16G16B16_SINT]       = {NULL,           VK_FORMAT_R16G16B16_SINT},
+    [NGLI_FORMAT_R16G16B16_SFLOAT]     = {NULL,           VK_FORMAT_R16G16B16_SFLOAT},
+    [NGLI_FORMAT_R16G16B16A16_UNORM]   = {"rgba16",       VK_FORMAT_R16G16B16A16_UNORM},
+    [NGLI_FORMAT_R16G16B16A16_SNORM]   = {"rgba16_snorm", VK_FORMAT_R16G16B16A16_SNORM},
+    [NGLI_FORMAT_R16G16B16A16_UINT]    = {"rgba16ui",     VK_FORMAT_R16G16B16A16_UINT},
+    [NGLI_FORMAT_R16G16B16A16_SINT]    = {"rgba16i",      VK_FORMAT_R16G16B16A16_SINT},
+    [NGLI_FORMAT_R16G16B16A16_SFLOAT]  = {"rgba16f",      VK_FORMAT_R16G16B16A16_SFLOAT},
+    [NGLI_FORMAT_R32_UINT]             = {"r32ui",        VK_FORMAT_R32_UINT},
+    [NGLI_FORMAT_R32_SINT]             = {"r32i",         VK_FORMAT_R32_SINT},
+    [NGLI_FORMAT_R32_SFLOAT]           = {"r32f",         VK_FORMAT_R32_SFLOAT},
+    [NGLI_FORMAT_R32G32_UINT]          = {"rg32ui",       VK_FORMAT_R32G32_UINT},
+    [NGLI_FORMAT_R32G32_SINT]          = {"rg32i",        VK_FORMAT_R32G32_SINT},
+    [NGLI_FORMAT_R32G32_SFLOAT]        = {"rg32f",        VK_FORMAT_R32G32_SFLOAT},
+    [NGLI_FORMAT_R32G32B32_UINT]       = {NULL,           VK_FORMAT_R32G32B32_UINT},
+    [NGLI_FORMAT_R32G32B32_SINT]       = {NULL,           VK_FORMAT_R32G32B32_SINT},
+    [NGLI_FORMAT_R32G32B32_SFLOAT]     = {NULL,           VK_FORMAT_R32G32B32_SFLOAT},
+    [NGLI_FORMAT_R32G32B32A32_UINT]    = {"rgba32ui",     VK_FORMAT_R32G32B32A32_UINT},
+    [NGLI_FORMAT_R32G32B32A32_SINT]    = {"rgba32i",      VK_FORMAT_R32G32B32A32_SINT},
+    [NGLI_FORMAT_R32G32B32A32_SFLOAT]  = {"rgba32f",      VK_FORMAT_R32G32B32A32_SFLOAT},
+    [NGLI_FORMAT_D16_UNORM]            = {NULL,           VK_FORMAT_D16_UNORM},
+    [NGLI_FORMAT_X8_D24_UNORM_PACK32]  = {NULL,           VK_FORMAT_X8_D24_UNORM_PACK32},
+    [NGLI_FORMAT_D32_SFLOAT]           = {NULL,           VK_FORMAT_D32_SFLOAT},
+    [NGLI_FORMAT_D24_UNORM_S8_UINT]    = {NULL,           VK_FORMAT_D24_UNORM_S8_UINT},
+    [NGLI_FORMAT_D32_SFLOAT_S8_UINT]   = {NULL,           VK_FORMAT_D32_SFLOAT_S8_UINT},
+    [NGLI_FORMAT_S8_UINT]              = {NULL,           VK_FORMAT_S8_UINT},
+};
+#else
 static const struct entry {
     const char *glsl_format;
     GLint format;
@@ -168,12 +236,27 @@ static const struct entry {
     [NGLI_FORMAT_D32_SFLOAT_S8_UINT]   = {NULL,           GL_DEPTH_STENCIL,   GL_DEPTH32F_STENCIL8,  GL_FLOAT_32_UNSIGNED_INT_24_8_REV},
     [NGLI_FORMAT_S8_UINT]              = {NULL,           GL_STENCIL_INDEX,   GL_STENCIL_INDEX8,     GL_UNSIGNED_BYTE},
 };
+#endif
 
 const char *ngli_format_get_glsl_format(int format)
 {
     return format_map[format].glsl_format;
 }
 
+#ifdef VULKAN_BACKEND
+int ngli_format_get_vk_format(struct vkcontext *vk, int data_format, VkFormat *format)
+{
+    ngli_assert(data_format >= 0 && data_format < NGLI_ARRAY_NB(format_map));
+    const struct entry *entry = &format_map[data_format];
+
+    ngli_assert(data_format == NGLI_FORMAT_UNDEFINED || entry->format);
+
+    if (format)
+        *format = entry->format;
+
+    return 0;
+}
+#else
 static int get_gl_format_type(struct glcontext *gl, int data_format,
                               GLint *formatp, GLint *internal_formatp, GLenum *typep)
 {
@@ -226,3 +309,4 @@ int ngli_format_get_gl_renderbuffer_format(struct glcontext *gl, int data_format
 {
     return get_gl_format_type(gl, data_format, NULL, formatp, NULL);
 }
+#endif

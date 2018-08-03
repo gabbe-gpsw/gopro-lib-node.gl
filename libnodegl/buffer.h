@@ -22,7 +22,11 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
+#ifdef VULKAN_BACKEND
+#include <vulkan/vulkan.h>
+#else
 #include "glincludes.h"
+#endif
 
 struct ngl_ctx;
 
@@ -36,7 +40,12 @@ struct buffer {
     struct ngl_ctx *ctx;
     int size;
     int usage;
+#ifdef VULKAN_BACKEND
+    VkBuffer vkbuf;
+    VkDeviceMemory vkmem;
+#else
     GLuint id;
+#endif
 };
 
 int ngli_buffer_init(struct buffer *s, struct ngl_ctx *ctx, int size, int usage);

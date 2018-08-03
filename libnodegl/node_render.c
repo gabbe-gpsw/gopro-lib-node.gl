@@ -28,6 +28,7 @@
 #include "log.h"
 #include "nodegl.h"
 #include "nodes.h"
+#include "params.h"
 #include "pass.h"
 #include "topology.h"
 #include "utils.h"

@@ -273,7 +273,6 @@ static const struct node_param texturecube_params[] = {
 static int texture_prefetch(struct ngl_node *node, enum texture_type type)
 {
     struct ngl_ctx *ctx = node->ctx;
-    struct glcontext *gl = ctx->glcontext;
     struct texture_priv *s = node->priv_data;
     struct texture_params *params = &s->params;
 
@@ -281,8 +280,13 @@ static int texture_prefetch(struct ngl_node *node, enum texture_type type)
     if (type == NGLI_TEXTURE_TYPE_CUBE)
         params->height = params->width;
 
+#ifdef VULKAN_BACKEND
+    params->immutable = 1;
+#else
+    struct glcontext *gl = ctx->glcontext;
     if (gl->features & NGLI_FEATURE_TEXTURE_STORAGE)
         params->immutable = 1;
+#endif
 
     const uint8_t *data = NULL;
 
@@ -444,6 +448,7 @@ static int texture2d_init(struct ngl_node *node)
 
 static int texture3d_init(struct ngl_node *node)
 {
+#ifndef VULKAN_BACKEND
     struct ngl_ctx *ctx = node->ctx;
     struct glcontext *gl = ctx->glcontext;
 
@@ -451,11 +456,13 @@ static int texture3d_init(struct ngl_node *node)
         LOG(ERROR, "context does not support 3D textures");
         return NGL_ERROR_UNSUPPORTED;
     }
+#endif
     return 0;
 }
 
 static int texturecube_init(struct ngl_node *node)
 {
+#ifndef VULKAN_BACKEND
     struct ngl_ctx *ctx = node->ctx;
     struct glcontext *gl = ctx->glcontext;
 
@@ -463,6 +470,7 @@ static int texturecube_init(struct ngl_node *node)
         LOG(ERROR, "context does not support cube map textures");
         return NGL_ERROR_UNSUPPORTED;
     }
+#endif
     return 0;
 }
 

@@ -22,7 +22,9 @@
 #ifndef GLCONTEXT_H
 #define GLCONTEXT_H
 
+#include <GL/glcorearb.h>
 #include <stdlib.h>
+
 #include "glfunctions.h"
 #include "nodegl.h"
 
@@ -62,7 +64,6 @@
                                          NGLI_FEATURE_SHADER_IMAGE_LOAD_STORE  | \
                                          NGLI_FEATURE_SHADER_STORAGE_BUFFER_OBJECT)
 
-struct glcontext_class;
 
 struct glcontext {
     /* GL context */

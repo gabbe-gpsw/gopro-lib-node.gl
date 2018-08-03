@@ -1225,6 +1225,7 @@ static const char * const vertex_data =
     "                * vec4(coords.xy, 0.0, 1.0);"                          "\n"
     "    var_tex_coord = coords.zw;"                                        "\n"
     "}";
+#endif
 
 static const char * const fragment_data =
     "ngl_in vec2 var_tex_coord;"                                            "\n"
@@ -1232,6 +1233,7 @@ static const char * const fragment_data =
     "{"                                                                     "\n"
     "    ngl_out_color = ngl_tex2d(tex, var_tex_coord);"                    "\n"
     "}";
+#endif
 
 static int hud_init(struct ngl_node *node)
 {

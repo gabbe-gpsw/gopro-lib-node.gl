@@ -23,7 +23,6 @@
 #define RENDERTARGET_H
 
 #include "darray.h"
-#include "glcontext.h"
 #include "texture.h"
 
 #define NGLI_MAX_COLOR_ATTACHMENTS 8
@@ -41,6 +40,7 @@ struct rendertarget_params {
     int nb_colors;
     struct texture *colors[NGLI_MAX_COLOR_ATTACHMENTS];
     struct texture *depth_stencil;
+    int readable;
 };
 
 struct rendertarget {
@@ -48,18 +48,31 @@ struct rendertarget {
     int width;
     int height;
     int nb_color_attachments;
+    struct rendertarget_params params;
 
+#ifdef VULKAN_BACKEND
+    int nb_attachments;
+    VkImageView attachments[NGLI_MAX_COLOR_ATTACHMENTS + 1];
+    VkFramebuffer framebuffer;
+    VkRenderPass render_pass;
+    VkRenderPass conservative_render_pass;
+    VkExtent2D render_area;
+    struct texture staging_texture;
+#else
     GLuint id;
     GLuint prev_id;
     GLenum *draw_buffers;
     int nb_draw_buffers;
     GLenum *blit_draw_buffers;
     void (*blit)(struct rendertarget *s, struct rendertarget *dst, int vflip);
+#endif
 };
 
 int ngli_rendertarget_init(struct rendertarget *s, struct ngl_ctx *ctx, const struct rendertarget_params *params);
 void ngli_rendertarget_blit(struct rendertarget *s, struct rendertarget *dst, int vflip);
 void ngli_rendertarget_read_pixels(struct rendertarget *s, uint8_t *data);
 void ngli_rendertarget_reset(struct rendertarget *s);
+
+int ngli_vk_create_renderpass_info(struct ngl_ctx *ctx, const struct rendertarget_desc *desc, VkRenderPass *render_pass, int conservative);
 
 #endif
