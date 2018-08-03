@@ -115,3 +115,7 @@ void ngli_gctx_invalidate_depth_stencil(struct ngl_ctx *s)
     static const GLenum attachments[] = {GL_DEPTH_ATTACHMENT, GL_STENCIL_ATTACHMENT};
     ngli_glInvalidateFramebuffer(gl, GL_FRAMEBUFFER, NGLI_ARRAY_NB(attachments), attachments);
 }
+
+void ngli_gctx_flush(struct ngl_ctx *s)
+{
+}

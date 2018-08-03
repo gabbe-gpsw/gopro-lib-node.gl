@@ -235,14 +235,6 @@ static int graphicconfig_init(struct ngl_node *node)
     return 0;
 }
 
-static int graphicconfig_update(struct ngl_node *node, double t)
-{
-    struct graphicconfig_priv *s = node->priv_data;
-    struct ngl_node *child = s->child;
-
-    return ngli_node_update(child, t);
-}
-
 #define COPY_PARAM(name) do {        \
     if (s->name != -1) {             \
         pending->name = s->name;     \
@@ -300,6 +292,12 @@ static int graphicconfig_prepare(struct ngl_node *node)
     honor_config(node, 1);
 
     return 0;
+}
+
+static int graphicconfig_update(struct ngl_node *node, double t)
+{
+    struct graphicconfig_priv *s = node->priv_data;
+    return ngli_node_update(s->child, t);
 }
 
 static void graphicconfig_draw(struct ngl_node *node)

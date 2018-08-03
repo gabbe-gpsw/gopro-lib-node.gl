@@ -191,6 +191,8 @@ static int prepare_canvas(struct text_priv *s)
     return 0;
 }
 
+
+// FIXME
 static const char * const vertex_data =
     "ngl_out vec2 var_tex_coord;"                                           "\n"
     "void main()"                                                           "\n"
