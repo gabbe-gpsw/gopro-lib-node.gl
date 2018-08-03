@@ -213,14 +213,16 @@ static int rtt_prefetch(struct ngl_node *node)
 {
     int ret = 0;
     struct ngl_ctx *ctx = node->ctx;
-    struct glcontext *gl = ctx->glcontext;
     struct rtt_priv *s = node->priv_data;
 
+#ifndef VULKAN_BACKEND
+    struct glcontext *gl = ctx->glcontext;
     if (!(gl->features & NGLI_FEATURE_FRAMEBUFFER_OBJECT) && s->samples > 0) {
         LOG(WARNING, "context does not support the framebuffer object feature, "
             "multisample anti-aliasing will be disabled");
         s->samples = 0;
     }
+#endif
 
     if (!s->nb_color_textures) {
         LOG(ERROR, "at least one color texture must be specified");
@@ -360,7 +362,7 @@ static void rtt_draw(struct ngl_node *node)
 
     struct rendertarget *rt = s->samples > 0 ? &s->rt_ms : &s->rt;
     struct rendertarget *prev_rt = ngli_gctx_get_rendertarget(ctx);
-    ngli_gctx_set_rendertarget(ctx, rt);
+    ngli_gctx_set_rendertarget(ctx, rt, 0);
 
     int prev_vp[4] = {0};
     ngli_gctx_get_viewport(ctx, prev_vp);
@@ -387,7 +389,7 @@ static void rtt_draw(struct ngl_node *node)
     if (s->invalidate_depth_stencil)
         ngli_gctx_invalidate_depth_stencil(ctx);
 
-    ngli_gctx_set_rendertarget(ctx, prev_rt);
+    ngli_gctx_set_rendertarget(ctx, prev_rt, 1);
     ngli_gctx_set_viewport(ctx, prev_vp);
 
     if (s->use_clear_color)

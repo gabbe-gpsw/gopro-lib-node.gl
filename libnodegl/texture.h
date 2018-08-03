@@ -24,6 +24,7 @@
 
 #include "glincludes.h"
 #include "utils.h"
+#include <vulkan/vulkan.h>
 
 struct ngl_ctx;
 
@@ -40,8 +41,13 @@ enum {
     NGLI_NB_FILTER
 };
 
+#ifndef VULKAN_BACKEND
 GLint ngli_texture_get_gl_min_filter(int min_filter, int mipmap_filter);
 GLint ngli_texture_get_gl_mag_filter(int mag_filter);
+#else
+VkFilter ngli_texture_get_vk_filter(int filter);
+VkSamplerMipmapMode ngli_texture_get_vk_mipmap_mode(int mipmap_filter);
+#endif
 
 enum {
     NGLI_WRAP_CLAMP_TO_EDGE,
@@ -50,7 +56,11 @@ enum {
     NGLI_NB_WRAP
 };
 
+#ifndef VULKAN_BACKEND
 GLint ngli_texture_get_gl_wrap(int wrap);
+#else
+VkSamplerAddressMode ngli_texture_get_vk_wrap(int wrap);
+#endif
 
 enum {
     NGLI_ACCESS_UNDEFINED,
@@ -62,7 +72,9 @@ enum {
 
 NGLI_STATIC_ASSERT(texture_access, (NGLI_ACCESS_READ_BIT | NGLI_ACCESS_WRITE_BIT) == NGLI_ACCESS_READ_WRITE);
 
+#ifndef VULKAN_BACKEND
 GLenum ngli_texture_get_gl_access(int access);
+#endif
 
 #define NGLI_TEXTURE_PARAM_DEFAULTS {          \
     .dimensions = 2,                           \
@@ -98,6 +110,7 @@ struct texture_params {
     int external_oes;
     int rectangle;
     int cubemap;
+    int staging;
 };
 
 struct texture {
@@ -107,17 +120,33 @@ struct texture {
     int external_storage;
     int bytes_per_pixel;
 
+#ifdef VULKAN_BACKEND
+    VkFormat format;
+    int mipmap_levels;
+
+    VkBuffer staging_buffer;
+    VkDeviceMemory staging_buffer_memory;
+    VkImage image;
+    VkImageLayout image_layout;
+    VkDeviceSize image_size;
+    int image_allocated;
+    VkDeviceMemory image_memory;
+    VkImageView image_view;
+    VkSampler image_sampler;
+#else
     GLenum target;
     GLuint id;
     GLint format;
     GLint internal_format;
     GLenum format_type;
+#endif
 };
 
 int ngli_texture_init(struct texture *s,
                       struct ngl_ctx *ctx,
                       const struct texture_params *params);
 
+#ifndef VULKAN_BACKEND
 int ngli_texture_wrap(struct texture *s,
                       struct ngl_ctx *ctx,
                       const struct texture_params *params,
@@ -125,6 +154,7 @@ int ngli_texture_wrap(struct texture *s,
 
 void ngli_texture_set_id(struct texture *s, GLuint id);
 void ngli_texture_set_dimensions(struct texture *s, int width, int height, int depth);
+#endif
 
 int ngli_texture_has_mipmap(const struct texture *s);
 int ngli_texture_match_dimensions(const struct texture *s, int width, int height, int depth);

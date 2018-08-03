@@ -267,9 +267,11 @@ static int check_dup_labels(const char *block_name, struct ngl_node * const *nod
 
 static int block_init(struct ngl_node *node)
 {
+    struct block_priv *s = node->priv_data;
+
+#ifndef VULKAN_BACKEND
     struct ngl_ctx *ctx = node->ctx;
     struct glcontext *gl = ctx->glcontext;
-    struct block_priv *s = node->priv_data;
 
     if (s->layout == NGLI_BLOCK_LAYOUT_STD140 && !(gl->features & FEATURES_STD140)) {
         LOG(ERROR, "std140 blocks are not supported by this context");
@@ -280,6 +282,7 @@ static int block_init(struct ngl_node *node)
         LOG(ERROR, "std430 blocks are not supported by this context");
         return NGL_ERROR_UNSUPPORTED;
     }
+#endif
 
     int ret = check_dup_labels(node->label, s->fields, s->nb_fields);
     if (ret < 0)

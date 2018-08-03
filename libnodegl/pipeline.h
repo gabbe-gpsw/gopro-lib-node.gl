@@ -119,8 +119,31 @@ struct pipeline {
 
     void (*exec)(const struct pipeline *s, struct glcontext *gl);
 
+#ifdef VULKAN_BACKEND
+    struct darray vertex_attribute_descs;
+    struct darray vertex_binding_descs;
+    struct darray vertex_buffers;
+    struct darray vertex_offsets;
+    int nb_vertex_buffers;
+
+    uint8_t *uniform_data;
+    int uniform_binding;
+    VkDescriptorType uniform_type;
+    struct buffer uniform_buffer;
+
+    VkDescriptorPool desc_pool;
+    struct darray desc_set_layout_bindings;
+    VkDescriptorSetLayout desc_set_layout;
+    VkDescriptorSet *desc_sets;
+    VkPipelineLayout pipeline_layout;
+    VkPipeline pipeline;
+
+    VkPipelineBindPoint bind_point;
+#else
     uint64_t used_texture_units;
     GLuint vao_id;
+#endif
+
 };
 
 int ngli_pipeline_init(struct pipeline *s, struct ngl_ctx *ctx, const struct pipeline_params *params);
