@@ -115,21 +115,16 @@ parameters][expl-shaders] documetation to know which parameters are exposed by
 `node.gl`.
 
 We are now going to pimp a little our fragment shader. Instead of just picking
-into the texture, we will mix it with some red by replacing the `gl_FragColor`
+into the texture, we will mix it with some red by replacing the `ngl_out_color`
 assignment with the following:
 
 ```glsl
-#version 100
-
-precision highp float;
-uniform sampler2D tex0_sampler;
-varying vec2 var_uvcoord;
-varying vec2 var_tex0_coord;
+ngl_in vec2 var_tex0_coord;
 void main()
 {
     vec4 color = vec4(1.0, 0.0, 0.0, 1.0);
-    vec4 video = texture2D(tex0_sampler, var_tex0_coord);
-    gl_FragColor = mix(video, color, 0.5);
+    vec4 video = ngl_tex2d(tex0, var_tex0_coord);
+    ngl_out_color = mix(video, color, 0.5);
 }
 
 ```
@@ -219,18 +214,11 @@ Just like `color`, we will transmit it to the shader through uniforms.
 The fragment shader ends up being:
 
 ```glsl
-#version 100
-
-precision highp float;
-uniform sampler2D tex0_sampler;
-uniform vec4 color;
-uniform float mixval;
-varying vec2 var_uvcoord;
-varying vec2 var_tex0_coord;
+ngl_in vec2 var_tex0_coord;
 void main()
 {
-    vec4 video = texture2D(tex0_sampler, var_tex0_coord);
-    gl_FragColor = mix(video, color, mixval);
+    vec4 video = ngl_tex2d(tex0, var_tex0_coord);
+    ngl_out_color = mix(video, color, mixval);
 }
 ```
 

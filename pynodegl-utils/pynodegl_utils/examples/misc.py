@@ -31,10 +31,7 @@ def lut3d(cfg, xsplit=.3, trilinear=True):
     video = ngl.Media(m0.filename)
     video_tex = ngl.Texture2D(data_src=video)
 
-    shader_version = '300 es' if cfg.backend == 'gles' else '330'
-    shader_header = '#version %s\n' % shader_version
-    prog = ngl.Program(fragment=shader_header + cfg.get_frag('lut3d'),
-                       vertex=shader_header + cfg.get_vert('lut3d'))
+    prog = ngl.Program(fragment=cfg.get_frag('lut3d'))
 
     quad = ngl.Quad((-1, -1, 0), (2, 0, 0), (0, 2, 0))
     render = ngl.Render(quad, prog)
@@ -236,11 +233,9 @@ def particules(cfg, particules=32):
     '''Particules demo using compute shaders and instancing'''
     random.seed(0)
 
-    shader_version = '310 es' if cfg.backend == 'gles' else '430'
-    shader_header = '#version %s\n' % shader_version
-    compute_shader = shader_header + cfg.get_comp('particules')
-    vertex_shader = shader_header + cfg.get_vert('particules')
-    fragment_shader = shader_header + cfg.get_frag('particules')
+    compute_shader = cfg.get_comp('particules')
+    vertex_shader = cfg.get_vert('particules')
+    fragment_shader = cfg.get_frag('particules')
 
     cfg.duration = 6
 
@@ -262,9 +257,9 @@ def particules(cfg, particules=32):
             random.uniform(-0.05, 0.05),
         ])
 
-    ipositions = ngl.Block(fields=[ngl.BufferVec3(data=positions)], layout='std430')
-    ivelocities = ngl.Block(fields=[ngl.BufferVec2(data=velocities)], layout='std430')
-    opositions = ngl.Block(fields=[ngl.BufferVec3(count=p)], layout='std430')
+    ipositions = ngl.Block(fields=[ngl.BufferVec3(data=positions, label='data')], layout='std430')
+    ivelocities = ngl.Block(fields=[ngl.BufferVec2(data=velocities, label='data')], layout='std430')
+    opositions = ngl.Block(fields=[ngl.BufferVec3(count=p, label='data')], layout='std430')
 
     animkf = [ngl.AnimKeyFrameFloat(0, 0),
               ngl.AnimKeyFrameFloat(cfg.duration, 1)]
@@ -277,9 +272,9 @@ def particules(cfg, particules=32):
     c.update_resources(
         time=utime,
         duration=uduration,
-        ipositions_buffer=ipositions,
-        ivelocities_buffer=ivelocities,
-        opositions_buffer=opositions,
+        ipositions=ipositions,
+        ivelocities=ivelocities,
+        opositions=opositions,
     )
 
     quad_width = 0.01
@@ -294,7 +289,7 @@ def particules(cfg, particules=32):
     )
     r = ngl.Render(quad, p, nb_instances=particules)
     r.update_fragment_resources(color=ngl.UniformVec4(value=(0, .6, .8, .9)))
-    r.update_vertex_resources(positions_buffer=opositions)
+    r.update_vertex_resources(positions=opositions)
 
     r = ngl.GraphicConfig(r,
                           blend=True,
@@ -505,29 +500,25 @@ def histogram(cfg):
     rtt.add_color_textures(proxy)
     g.add_children(rtt)
 
-    shader_version = '310 es' if cfg.backend == 'gles' else '430'
-    shader_header = '#version %s\n' % shader_version
-    if cfg.backend == 'gles' and cfg.system == 'Android':
-        shader_header += '#extension GL_ANDROID_extension_pack_es31a: require\n'
-
-    compute_program = ngl.ComputeProgram(shader_header + cfg.get_comp('histogram-clear'))
+    compute_program = ngl.ComputeProgram(cfg.get_comp('histogram-clear'))
     compute = ngl.Compute(256, 1, 1, compute_program, label='histogram-clear')
-    compute.update_resources(histogram_buffer=h)
+    compute.update_resources(hist=h)
     g.add_children(compute)
 
     local_size = 8
     group_size = proxy_size / local_size
     compute_shader = cfg.get_comp('histogram-exec') % {'local_size': local_size}
-    compute_program = ngl.ComputeProgram(shader_header + compute_shader)
+    compute_program = ngl.ComputeProgram(compute_shader)
     compute = ngl.Compute(group_size, group_size, 1, compute_program, label='histogram-exec')
-    compute.update_resources(histogram_buffer=h, source=proxy)
+    compute.update_resources(hist=h, source=proxy)
+    compute_program.update_properties(source=ngl.ResourceProps(as_image=True))
     g.add_children(compute)
 
     q = ngl.Quad((-1, -1, 0), (2, 0, 0), (0, 2, 0))
-    p = ngl.Program(vertex=shader_header + cfg.get_vert('histogram-display'),
-                    fragment=shader_header + cfg.get_frag('histogram-display'))
+    p = ngl.Program(vertex=cfg.get_vert('histogram-display'),
+                    fragment=cfg.get_frag('histogram-display'))
     render = ngl.Render(q, p)
-    render.update_fragment_resources(tex0=t, histogram_buffer=h)
+    render.update_fragment_resources(tex0=t, hist=h)
     g.add_children(render)
 
     return g

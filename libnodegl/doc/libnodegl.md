@@ -275,6 +275,7 @@ Parameter | Ctor. | Live-chg. | Type | Description | Default
 Parameter | Ctor. | Live-chg. | Type | Description | Default
 --------- | :---: | :-------: | ---- | ----------- | :-----:
 `compute` | ✓ |  | [`string`](#parameter-types) | compute shader | 
+`properties` |  |  | [`NodeDict`](#parameter-types) ([ResourceProps](#resourceprops)) | resource properties | 
 
 
 **Source**: [node_computeprogram.c](/libnodegl/node_computeprogram.c)
@@ -381,6 +382,8 @@ Parameter | Ctor. | Live-chg. | Type | Description | Default
 --------- | :---: | :-------: | ---- | ----------- | :-----:
 `vertex` |  |  | [`string`](#parameter-types) | vertex shader | 
 `fragment` |  |  | [`string`](#parameter-types) | fragment shader | 
+`properties` |  |  | [`NodeDict`](#parameter-types) ([ResourceProps](#resourceprops)) | resource properties | 
+`nb_frag_output` |  |  | [`int`](#parameter-types) | number of color outputs in the fragment shader | `0`
 
 
 **Source**: [node_program.c](/libnodegl/node_program.c)

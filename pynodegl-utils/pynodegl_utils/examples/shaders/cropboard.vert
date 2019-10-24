@@ -1,20 +1,4 @@
-#version 100
-
-precision highp float;
-
-attribute vec4 ngl_position;
-attribute vec2 ngl_uvcoord;
-uniform mat4 ngl_modelview_matrix;
-uniform mat4 ngl_projection_matrix;
-
-uniform mat4 tex0_coord_matrix;
-
-varying vec2 var_tex0_coord;
-
-uniform float time;
-attribute vec2 uv_offset;
-attribute vec2 translate_a;
-attribute vec2 translate_b;
+ngl_out vec2 var_tex0_coord;
 
 void main()
 {

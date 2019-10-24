@@ -77,13 +77,6 @@ def _get_cube():
 
 
 _RENDER_CUBE_VERT = '''
-#version 100
-precision highp float;
-attribute vec4 ngl_position;
-attribute vec3 ngl_normal;
-uniform mat4 ngl_modelview_matrix;
-uniform mat4 ngl_projection_matrix;
-uniform mat3 ngl_normal_matrix;
 varying vec3 var_normal;
 void main()
 {
@@ -94,13 +87,11 @@ void main()
 
 
 _RENDER_CUBE_FRAG = '''
-#version 100
-precision mediump float;
 varying vec3 var_normal;
 
 void main()
 {
-    gl_FragColor = vec4((var_normal + 1.0) / 2.0, 1.0);
+    ngl_out_color = vec4((var_normal + 1.0) / 2.0, 1.0);
 }
 '''
 

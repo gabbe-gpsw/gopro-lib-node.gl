@@ -22,12 +22,8 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
-#include "bstr.h"
-#include "log.h"
 #include "nodegl.h"
 #include "nodes.h"
-#include "pgcache.h"
-#include "program.h"
 
 #define OFFSET(x) offsetof(struct program_priv, x)
 static const struct node_param program_params[] = {
@@ -35,33 +31,17 @@ static const struct node_param program_params[] = {
                  .desc=NGLI_DOCSTRING("vertex shader")},
     {"fragment", PARAM_TYPE_STR, OFFSET(fragment), {.str=NULL},
                  .desc=NGLI_DOCSTRING("fragment shader")},
+    {"properties", PARAM_TYPE_NODEDICT, OFFSET(properties),
+                   .node_types=(const int[]){NGL_NODE_RESOURCEPROPS, -1},
+                   .desc=NGLI_DOCSTRING("resource properties")},
+    {"nb_frag_output", PARAM_TYPE_INT, OFFSET(nb_frag_output),
+                       .desc=NGLI_DOCSTRING("number of color outputs in the fragment shader")},
     {NULL}
 };
-
-static int program_init(struct ngl_node *node)
-{
-    struct ngl_ctx *ctx = node->ctx;
-    struct program_priv *s = node->priv_data;
-
-    if (!s->vertex || !s->fragment) {
-        LOG(ERROR, "both vertex and fragment shaders must be set");
-        return NGL_ERROR_INVALID_USAGE;
-    }
-
-    return ngli_pgcache_get_graphics_program(&ctx->pgcache, &s->program, s->vertex, s->fragment);
-}
-
-static void program_uninit(struct ngl_node *node)
-{
-    struct program_priv *s = node->priv_data;
-    ngli_pgcache_release_program(&s->program);
-}
 
 const struct node_class ngli_program_class = {
     .id        = NGL_NODE_PROGRAM,
     .name      = "Program",
-    .init      = program_init,
-    .uninit    = program_uninit,
     .priv_size = sizeof(struct program_priv),
     .params    = program_params,
     .file      = __FILE__,
