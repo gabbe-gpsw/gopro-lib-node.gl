@@ -208,6 +208,8 @@
 - ComputeProgram:
     constructors:
         - [compute, string]
+    optional:
+        - [properties, NodeDict]
 
 - Geometry:
     constructors:
@@ -283,6 +285,9 @@
     optional:
         - [vertex, string]
         - [fragment, string]
+        - [properties, NodeDict]
+        - [vert2frag_vars, NodeDict]
+        - [nb_frag_output, int]
 
 - Quad:
     optional:

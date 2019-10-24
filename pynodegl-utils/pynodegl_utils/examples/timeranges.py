@@ -21,6 +21,8 @@ def queued_medias(cfg, overlap_time=1., dim=3):
         t = ngl.Texture2D(data_src=m)
 
         program = ngl.Program(vertex=cfg.get_vert('texture'), fragment=cfg.get_frag('texture'))
+        program.update_vert2frag_vars(var_uvcoord=ngl.IOVariable('vec2'),
+                                      var_tex0_coord=ngl.IOVariable('vec2'))
         render = ngl.Render(q, program)
         render.set_label('render #%d' % video_id)
         render.update_fragment_resources(tex0=t)
@@ -58,6 +60,8 @@ def parallel_playback(cfg, fast=True, segment_time=2., constrained_timeranges=Fa
     t2 = ngl.Texture2D(data_src=m2, label='texture #2')
 
     program = ngl.Program(vertex=cfg.get_vert('texture'), fragment=cfg.get_frag('texture'))
+    program.update_vert2frag_vars(var_uvcoord=ngl.IOVariable('vec2'),
+                                  var_tex0_coord=ngl.IOVariable('vec2'))
     render1 = ngl.Render(q, program, label='render #1')
     render1.update_fragment_resources(tex0=t1)
     render2 = ngl.Render(q, program, label='render #2')
@@ -114,6 +118,8 @@ def simple_transition(cfg, transition_start=2, transition_duration=4):
 
     q = ngl.Quad((-1, -1, 0), (2, 0, 0), (0, 2, 0))
     p1_2 = ngl.Program(vertex=vertex, fragment=fragment)
+    p1_2.update_vert2frag_vars(var_tex0_coord=ngl.IOVariable('vec2'),
+                               var_tex1_coord=ngl.IOVariable('vec2'))
 
     m1 = ngl.Media(cfg.medias[0].filename, label='media #1')
     m2 = ngl.Media(cfg.medias[1 % len(cfg.medias)].filename, label='media #2')
@@ -125,6 +131,8 @@ def simple_transition(cfg, transition_start=2, transition_duration=4):
     t2 = ngl.Texture2D(data_src=m2, label='texture #2')
 
     program = ngl.Program(vertex=cfg.get_vert('texture'), fragment=cfg.get_frag('texture'))
+    program.update_vert2frag_vars(var_uvcoord=ngl.IOVariable('vec2'),
+                var_tex0_coord=ngl.IOVariable('vec2'))
     render1 = ngl.Render(q, program, label='render #1')
     render1.update_fragment_resources(tex0=t1)
     render2 = ngl.Render(q, program, label='render #2')

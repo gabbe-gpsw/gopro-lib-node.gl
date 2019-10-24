@@ -55,6 +55,8 @@ def animated_uniform(cfg):
     m = ngl.Media(m0.filename)
     t = ngl.Texture2D(data_src=m)
     p = ngl.Program(vertex=cfg.get_vert('texture'), fragment=cfg.get_frag('matrix-transform'))
+    p.update_vert2frag_vars(var_uvcoord=ngl.IOVariable('vec2'),
+                            var_tex0_coord=ngl.IOVariable('vec2'))
     ts = ngl.Render(q, p)
     ts.update_fragment_resources(tex0=t)
 
@@ -81,6 +83,8 @@ def animated_camera(cfg, rotate=True):
     m = ngl.Media(cfg.medias[0].filename)
     t = ngl.Texture2D(data_src=m)
     program = ngl.Program(vertex=cfg.get_vert('texture'), fragment=cfg.get_frag('texture'))
+    program.update_vert2frag_vars(var_uvcoord=ngl.IOVariable('vec2'),
+                                  var_tex0_coord=ngl.IOVariable('vec2'))
     node = ngl.Render(q, program)
     node.update_fragment_resources(tex0=t)
     g.add_children(node)
@@ -141,6 +145,8 @@ def animated_buffer(cfg, dim=50):
 
     quad = ngl.Quad((-1, -1, 0), (2, 0, 0), (0, 2, 0))
     program = ngl.Program(vertex=cfg.get_vert('texture'), fragment=cfg.get_frag('texture'))
+    program.update_vert2frag_vars(var_uvcoord=ngl.IOVariable('vec2'),
+                                  var_tex0_coord=ngl.IOVariable('vec2'))
     render = ngl.Render(quad, program)
     render.update_fragment_resources(tex0=random_tex)
     return render
