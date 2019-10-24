@@ -77,13 +77,11 @@ def _get_cube():
 
 
 _RENDER_CUBE = '''
-#version 100
-precision mediump float;
-varying vec3 var_normal;
+ngl_in vec3 var_normal;
 
 void main()
 {
-    gl_FragColor = vec4((var_normal + 1.0) / 2.0, 1.0);
+    ngl_out_color = vec4((var_normal + 1.0) / 2.0, 1.0);
 }
 '''
 

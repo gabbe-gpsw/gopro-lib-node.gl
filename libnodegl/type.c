@@ -20,6 +20,7 @@
  */
 
 #include "type.h"
+#include "format.h"
 
 static int gl_type_map[] = {
     [NGLI_TYPE_INT]                         = GL_INT,
@@ -51,4 +52,44 @@ static int gl_type_map[] = {
 GLenum ngli_type_get_gl_type(int type)
 {
     return gl_type_map[type];
+}
+
+static const struct {
+    int is_sampler_or_image;
+    const char *glsl_type;
+} type_info_map[] = {
+    [NGLI_TYPE_INT]                         = {0, "int"},
+    [NGLI_TYPE_IVEC2]                       = {0, "ivec2"},
+    [NGLI_TYPE_IVEC3]                       = {0, "ivec3"},
+    [NGLI_TYPE_IVEC4]                       = {0, "ivec4"},
+    [NGLI_TYPE_UINT]                        = {0, "uint"},
+    [NGLI_TYPE_UIVEC2]                      = {0, "uvec2"},
+    [NGLI_TYPE_UIVEC3]                      = {0, "uvec3"},
+    [NGLI_TYPE_UIVEC4]                      = {0, "uvec4"},
+    [NGLI_TYPE_FLOAT]                       = {0, "float"},
+    [NGLI_TYPE_VEC2]                        = {0, "vec2"},
+    [NGLI_TYPE_VEC3]                        = {0, "vec3"},
+    [NGLI_TYPE_VEC4]                        = {0, "vec4"},
+    [NGLI_TYPE_MAT3]                        = {0, "mat3"},
+    [NGLI_TYPE_MAT4]                        = {0, "mat4"},
+    [NGLI_TYPE_BOOL]                        = {0, "bool"},
+    [NGLI_TYPE_SAMPLER_2D]                  = {1, "sampler2D"},
+    [NGLI_TYPE_SAMPLER_2D_RECT]             = {1, "sampler2DRect"},
+    [NGLI_TYPE_SAMPLER_3D]                  = {1, "sampler3D"},
+    [NGLI_TYPE_SAMPLER_CUBE]                = {1, "samplerCube"},
+    [NGLI_TYPE_SAMPLER_EXTERNAL_OES]        = {1, "samplerExternalOES"},
+    [NGLI_TYPE_SAMPLER_EXTERNAL_2D_Y2Y_EXT] = {1, "__samplerExternal2DY2YEXT"},
+    [NGLI_TYPE_IMAGE_2D]                    = {1, "image2D"},
+    [NGLI_TYPE_UNIFORM_BUFFER]              = {0, "uniform"},
+    [NGLI_TYPE_STORAGE_BUFFER]              = {0, "buffer"},
+};
+
+int ngli_type_is_sampler_or_image(int type)
+{
+    return type_info_map[type].is_sampler_or_image;
+}
+
+const char *ngli_type_get_glsl_type(int type)
+{
+    return type_info_map[type].glsl_type;
 }

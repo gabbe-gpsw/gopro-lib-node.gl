@@ -54,5 +54,7 @@ enum {
 };
 
 GLenum ngli_type_get_gl_type(int type);
+const char *ngli_type_get_glsl_type(int type);
+int ngli_type_is_sampler_or_image(int type);
 
 #endif
