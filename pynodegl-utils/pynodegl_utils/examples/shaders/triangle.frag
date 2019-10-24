@@ -1,7 +1,5 @@
-#version 100
-precision mediump float;
-varying vec4 var_color;
+ngl_in vec4 var_color;
 void main()
 {
-    gl_FragColor = var_color;
+    ngl_out_color = var_color;
 }

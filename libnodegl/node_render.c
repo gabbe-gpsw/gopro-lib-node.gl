@@ -149,15 +149,19 @@ static int render_init(struct ngl_node *node)
         return NGL_ERROR_INVALID_USAGE;
     }
 
+    const struct program_priv *program = s->program->priv_data;
     struct pass_params params = {
         .label = node->label,
         .geometry = s->geometry,
-        .program = s->program,
+        .vert_base = program->vertex,
+        .frag_base = program->fragment,
         .vertex_resources = s->vertex_resources,
         .fragment_resources = s->fragment_resources,
+        .properties = program->properties : NULL,
         .attributes = s->attributes,
         .instance_attributes = s->instance_attributes,
         .nb_instances = s->nb_instances,
+        .nb_frag_output = program->nb_frag_output,
     };
     return ngli_pass_init(&s->pass, ctx, &params);
 }

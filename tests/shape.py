@@ -332,16 +332,9 @@ shape_cropboard_indices = _get_cropboard_function(set_indices=True)
 
 
 TRIANGLES_MAT4_ATTRIBUTE_VERT = '''
-#version 100
-precision highp float;
-attribute vec4 ngl_position;
-attribute mat4 matrix;
-uniform mat4 ngl_modelview_matrix;
-uniform mat4 ngl_projection_matrix;
-
 void main()
 {
-    gl_Position = ngl_projection_matrix * ngl_modelview_matrix * matrix * ngl_position;
+    ngl_out_pos = ngl_projection_matrix * ngl_modelview_matrix * matrix * ngl_position;
 }
 '''
 

@@ -15,9 +15,9 @@ Fragment and vertex shader parameters
 
 Qualifier | Type   | Name                       | Description
 ----------|--------|----------------------------|------------
-in        | `vec4` | `ngl_position`             | geometry vertex attribute
-in        | `vec2` | `ngl_uvcoord`              | geometry uv coordinate attribute
-in        | `vec3` | `ngl_normal`               | geometry normal attribute
+ngl_in    | `vec4` | `ngl_position`             | geometry vertex attribute
+ngl_in    | `vec2` | `ngl_uvcoord`              | geometry uv coordinate attribute
+ngl_in    | `vec3` | `ngl_normal`               | geometry normal attribute
 uniform   | `mat4` | `ngl_modelview_matrix`     | modelview matrix
 uniform   | `mat4` | `ngl_projection_matrix`    | projection matrix
 uniform   | `mat3` | `ngl_normal_matrix`        | normal matrix
@@ -35,7 +35,7 @@ For example, the following scene script:
     render.update_fragment_resources(tex0=texture0)
 ```
 
-Gives the following shader parameters:
+Gives the following fragment parameters:
 
 ```glsl
     uniform mat4               tex0_coord_matrix;
@@ -85,8 +85,8 @@ For example, the following scene script:
 Gives the following shader parameter:
 
 ```glsl
-    in vec3 center;
-    in vec4 color;
+    ngl_in vec3 center;
+    ngl_in vec4 color;
 ```
 
 ## Uniform parameters
@@ -103,7 +103,7 @@ For example, the following scene script:
     render.update_fragment_resources(color1=ucolor1, color2=ucolor2, matrix=umatrix)
 ```
 
-Gives the following shader parameters:
+Gives the following fragment parameters:
 
 ```glsl
     uniform vec4 color1;
@@ -119,27 +119,27 @@ using names derived from their respective dict parameters keys.
 For example, the following scene script:
 
 ```python
-    histogram_block = Block(fields=[UniformFloat(), BufferVec4(256)])
+    histogram_block = Block(fields=[UniformFloat(label='maximum'), BufferVec4(256, label='data')])
     render = Render(geometry)
     render.update_fragment_resources(histogram=histogram_block)
 ```
 
 Gives the following shader parameters as SSBO with
-`histogram_block.set_layout('std430')`:
+`histogram.set_layout('std430')`:
 
 ```glsl
-    layout (std430, binding=0) buffer histogram {
+    layout (std430, binding=0) buffer histogram_block {
         float maximum;
         vec4 data[];
-    };
+    } histogram;
 ```
 
 Or gives the following shader parameters as UBO with
-`histogram_block.set_layout('std140')`:
+`histogram.set_layout('std140')`:
 
 ```glsl
-    layout (std140, binding=0) uniform histogram {
+    layout (std140, binding=0) uniform histogram_block {
         float maximum;
         vec4 data[256];
-    };
+    } histogram;
 ```
