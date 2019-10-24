@@ -139,19 +139,71 @@ static const struct node_param render_params[] = {
     {NULL}
 };
 
+static const char default_vertex_shader_tex[] =
+    "ngl_out vec2 var_uvcoord;"                                                         "\n"
+    "ngl_out vec3 var_normal;"                                                          "\n"
+    "ngl_out vec2 var_tex0_coord;"                                                      "\n"
+    ""                                                                                  "\n"
+    "void main()"                                                                       "\n"
+    "{"                                                                                 "\n"
+    "    ngl_out_pos = ngl_projection_matrix * ngl_modelview_matrix * ngl_position;"    "\n"
+    "    var_uvcoord = ngl_uvcoord;"                                                    "\n"
+    "    var_normal = ngl_normal_matrix * ngl_normal;"                                  "\n"
+    "    var_tex0_coord = (tex0_coord_matrix * vec4(ngl_uvcoord, 0.0, 1.0)).xy;"        "\n"
+    "}";
+
+static const char default_vertex_shader_notex[] =
+    "ngl_out vec2 var_uvcoord;"                                                         "\n"
+    "ngl_out vec3 var_normal;"                                                          "\n"
+    ""                                                                                  "\n"
+    "void main()"                                                                       "\n"
+    "{"                                                                                 "\n"
+    "    ngl_out_pos = ngl_projection_matrix * ngl_modelview_matrix * ngl_position;"    "\n"
+    "    var_uvcoord = ngl_uvcoord;"                                                    "\n"
+    "    var_normal = ngl_normal_matrix * ngl_normal;"                                  "\n"
+    "}";
+
+static const char default_fragment_shader[] =
+    "ngl_in vec2 var_tex0_coord;"                                                       "\n"
+    ""                                                                                  "\n"
+    "void main()"                                                                       "\n"
+    "{"                                                                                 "\n"
+    "    ngl_out_color = ngl_texvideo(tex0, var_tex0_coord);"                           "\n"
+    "}";
+
+static int has_tex(const struct hmap *resources)
+{
+    if (!resources)
+        return 0;
+
+    const struct hmap_entry *entry = NULL;
+    while ((entry = ngli_hmap_next(resources, entry))) {
+        const struct ngl_node *node = entry->data;
+        if (node->class->category == NGLI_NODE_CATEGORY_TEXTURE)
+            return 1;
+    }
+    return 0;
+}
+
 static int render_init(struct ngl_node *node)
 {
     struct ngl_ctx *ctx = node->ctx;
     struct render_priv *s = node->priv_data;
+    const struct program_priv *program = s->program ? s->program->priv_data : NULL;
+    const char *default_vertex_shader = has_tex(s->fragment_resources) ? default_vertex_shader_tex
+                                                                       : default_vertex_shader_notex;
     struct pass_params params = {
         .label = node->label,
         .geometry = s->geometry,
-        .program = s->program,
+        .vert_base = program && program->vertex   ? program->vertex   : default_vertex_shader,
+        .frag_base = program && program->fragment ? program->fragment : default_fragment_shader,
         .vertex_resources = s->vertex_resources,
         .fragment_resources = s->fragment_resources,
+        .properties = program ? program->properties : NULL,
         .attributes = s->attributes,
         .instance_attributes = s->instance_attributes,
         .nb_instances = s->nb_instances,
+        .nb_frag_output = program && program->nb_frag_output ? program->nb_frag_output : 0,
     };
     return ngli_pass_init(&s->pass, ctx, &params);
 }

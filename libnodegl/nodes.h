@@ -300,6 +300,8 @@ struct program_priv {
     const char *vertex;
     const char *fragment;
     const char *compute;
+    struct hmap *properties;
+    int nb_frag_output;
 
     struct program program;
 };

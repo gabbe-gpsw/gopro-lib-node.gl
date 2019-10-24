@@ -31,27 +31,19 @@ struct sxplayer_info g_info;
 struct ngl_node *g_opacity_uniform;
 
 static const char *pgbar_shader = \
-"#version 100"                                                          "\n" \
-"precision mediump float;"                                              "\n" \
-                                                                        "\n" \
-"uniform float ar;"                                                     "\n" \
-"uniform float opacity;"                                                "\n" \
-"uniform sampler2D tex0_sampler;"                                       "\n" \
-"uniform float tex0_ts;"                                                "\n" \
-"uniform float media_duration;"                                         "\n" \
-"varying vec2 var_tex0_coord;"                                          "\n" \
+"ngl_in vec2 var_tex0_coord;"                                           "\n" \
                                                                         "\n" \
 "void main()"                                                           "\n" \
 "{"                                                                     "\n" \
 "    float height = 2.0 / 100. * ar;"                                   "\n" \
 "    float x = var_tex0_coord.x;"                                       "\n" \
 "    float y = var_tex0_coord.y;"                                       "\n" \
-"    vec4 video_pix = texture2D(tex0_sampler, var_tex0_coord);"         "\n" \
+"    vec4 video_pix = ngl_texvideo(tex0_sampler, var_tex0_coord);"      "\n" \
 "    vec4 color = video_pix;"                                           "\n" \
 "    float time = tex0_ts / media_duration;"                            "\n" \
 "    if (y > 1. - height)"                                              "\n" \
 "        color = x < time ? vec4(1.) : mix(video_pix, vec4(1.), 0.3);"  "\n" \
-"    gl_FragColor = mix(video_pix, color, opacity);"                    "\n" \
+"    ngl_out_color = mix(video_pix, color, opacity);"                   "\n" \
 "}"                                                                     "\n";
 
 static struct ngl_node *get_scene(const char *filename)

@@ -1,17 +1,4 @@
-#version 100
-
-precision mediump float;
-varying vec2 var_tex0_coord;
-uniform sampler2D tex0_sampler;
-uniform int dim;
-uniform int nb_layers;
-uniform float time;
-
-uniform float gain;
-uniform float lacunarity;
-uniform vec4 mcolor;
-uniform float yoffset;
-uniform float hscale;
+ngl_in vec2 var_tex0_coord;
 
 float f(float t)
 {
@@ -22,7 +9,7 @@ float f(float t)
 float pick_rand1d(float pos, float off)
 {
     float value_point = fract(pos + off);
-    float value = texture2D(tex0_sampler, vec2(value_point, 0)).x;
+    float value = ngl_tex2d(tex0, vec2(value_point, 0)).x;
     return value;
 }
 
@@ -58,5 +45,5 @@ void main()
     float y = 1.0 - var_tex0_coord.y;
     float alpha = smoothstep(y-alpha_blend_h, y+alpha_blend_h, h);
 
-    gl_FragColor = vec4(mcolor.rgb, alpha);
+    ngl_out_color = vec4(mcolor.rgb, alpha);
 }
