@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 GoPro Inc.
+ * Copyright 2019 GoPro Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -19,38 +19,30 @@
  * under the License.
  */
 
-#ifndef PROGRAM_H
-#define PROGRAM_H
+#ifndef PROGRAM_REFLECTION_H
+#define PROGRAM_REFLECTION_H
 
-#include "glincludes.h"
-#include "hmap.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#define MAX_ID_LEN 128
-
-struct program_variable_info {
-    int binding;
-    int location;
-    int stages;
-    int access;
-};
-
-enum {
-    NGLI_PROGRAM_SHADER_VERT,
-    NGLI_PROGRAM_SHADER_FRAG,
-    NGLI_PROGRAM_SHADER_COMP,
-    NGLI_PROGRAM_SHADER_NB
-};
-
-struct program {
+struct program_reflection {
     struct ngl_ctx *ctx;
     struct hmap *uniforms;
-    struct hmap *attributes;
-    struct hmap *buffer_blocks;
-
-    GLuint id;
+    struct hmap *blocks;
+    struct hmap *inputs;
+    struct hmap *outputs;
 };
 
-int ngli_program_init(struct program *s, struct ngl_ctx *ctx, const char *vertex, const char *fragment, const char *compute);
-void ngli_program_reset(struct program *s);
+int ngli_program_reflection_init(struct program_reflection *s,
+                                 const char *vertex,
+                                 const char *fragment,
+                                 const char *compute);
+void ngli_program_reflection_dump(struct program_reflection *s);
+void ngli_program_reflection_reset(struct program_reflection *s);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

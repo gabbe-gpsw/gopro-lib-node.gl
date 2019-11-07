@@ -23,12 +23,15 @@
 #include <string.h>
 
 #include "glincludes.h"
+#include "hmap.h"
 #include "log.h"
 #include "memory.h"
 #include "nodes.h"
 #include "program.h"
+#include "program_reflection.h"
 #include "type.h"
 
+#include "utils.h"
 static int program_check_status(const struct glcontext *gl, GLuint id, GLenum status)
 {
     char *info_log = NULL;
@@ -257,6 +260,11 @@ int ngli_program_init(struct program *s, struct ngl_ctx *ctx, const char *vertex
         return NGL_ERROR_UNSUPPORTED;
     }
 
+    struct program_reflection r = {0};
+    ret = ngli_program_reflection_init(&r, vertex, fragment, compute);
+    if (ret == 0)
+        ngli_program_reflection_dump(&r);
+
     s->ctx = ctx;
     s->id = ngli_glCreateProgram(gl);
 
@@ -280,6 +288,22 @@ int ngli_program_init(struct program *s, struct ngl_ctx *ctx, const char *vertex
 
     for (int i = 0; i < NGLI_ARRAY_NB(shaders); i++)
         ngli_glDeleteShader(gl, shaders[i].id);
+
+    s->uniforms = r.uniforms;
+    s->attributes = r.inputs;
+    s->buffer_blocks = r.blocks;
+
+    const struct hmap_entry *entry = NULL;
+    while ((entry = ngli_hmap_next(s->uniforms, entry))) {
+        struct program_variable_info *info = entry->data;
+        info->location = ngli_glGetUniformLocation(gl, s->id, entry->key);
+    }
+
+    entry = NULL;
+    while ((entry = ngli_hmap_next(s->attributes, entry))) {
+        struct program_variable_info *info = entry->data;
+        info->location = ngli_glGetAttribLocation(gl, s->id, entry->key);
+    }
 
     s->uniforms = program_probe_uniforms(gl, s->id);
     s->attributes = program_probe_attributes(gl, s->id);
