@@ -23,12 +23,14 @@
 #include <string.h>
 
 #include "glincludes.h"
+#include "hmap.h"
 #include "log.h"
 #include "memory.h"
 #include "nodes.h"
 #include "program.h"
 #include "type.h"
 
+#include "utils.h"
 static int program_check_status(const struct glcontext *gl, GLuint id, GLenum status)
 {
     char *info_log = NULL;

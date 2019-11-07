@@ -30,6 +30,7 @@ struct backend {
     int (*resize)(struct ngl_ctx *s, int width, int height, const int *viewport);
     int (*pre_draw)(struct ngl_ctx *s, double t);
     int (*post_draw)(struct ngl_ctx *s, double t);
+    void (*wait_idle)(struct ngl_ctx *s);
     void (*destroy)(struct ngl_ctx *s);
 };
 

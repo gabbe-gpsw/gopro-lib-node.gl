@@ -38,7 +38,9 @@
 #include "nodes.h"
 #include "rnode.h"
 
-#if defined(TARGET_IPHONE) || defined(TARGET_ANDROID)
+#if defined(VULKAN_BACKEND)
+# define DEFAULT_BACKEND NGL_BACKEND_VULKAN
+#elif defined(TARGET_IPHONE) || defined(TARGET_ANDROID)
 # define DEFAULT_BACKEND NGL_BACKEND_OPENGLES
 #else
 # define DEFAULT_BACKEND NGL_BACKEND_OPENGL
@@ -46,10 +48,15 @@
 
 extern const struct backend ngli_backend_gl;
 extern const struct backend ngli_backend_gles;
+extern const struct backend ngli_backend_vk;
 
 static const struct backend *backend_map[] = {
+#ifdef VULKAN_BACKEND
+    [NGL_BACKEND_VULKAN]   = &ngli_backend_vk,
+#else
     [NGL_BACKEND_OPENGL]   = &ngli_backend_gl,
     [NGL_BACKEND_OPENGLES] = &ngli_backend_gles,
+#endif
 };
 
 static int get_default_platform(void)
@@ -139,6 +146,7 @@ static int cmd_resize(struct ngl_ctx *s, void *arg)
 static int cmd_set_scene(struct ngl_ctx *s, void *arg)
 {
     if (s->scene) {
+        s->backend->wait_idle(s);
         ngli_node_detach_ctx(s->scene, s);
         ngl_node_unrefp(&s->scene);
     }
@@ -196,6 +204,7 @@ static int cmd_draw(struct ngl_ctx *s, void *arg)
     ret = s->backend->pre_draw(s, t);
     if (ret < 0)
         goto end;
+
 
     if (s->scene) {
         LOG(DEBUG, "draw scene %s @ t=%f", s->scene->label, t);
@@ -324,8 +333,19 @@ struct ngl_ctx *ngl_create(void)
     ngli_darray_init(&s->activitycheck_nodes, sizeof(struct ngl_node *), 0);
 
     static const NGLI_ALIGNED_MAT(id_matrix) = NGLI_MAT4_IDENTITY;
+#ifdef VULKAN_BACKEND
+    static const NGLI_ALIGNED_MAT(projection_matrix) = {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f,-1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.5f, 0.5f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    };
+#else
+    static const NGLI_ALIGNED_MAT(projection_matrix) = NGLI_MAT4_IDENTITY;
+#endif
+
     if (!ngli_darray_push(&s->modelview_matrix_stack, id_matrix) ||
-        !ngli_darray_push(&s->projection_matrix_stack, id_matrix))
+        !ngli_darray_push(&s->projection_matrix_stack, projection_matrix))
         goto fail;
 
     LOG(INFO, "context create in node.gl v%d.%d.%d",

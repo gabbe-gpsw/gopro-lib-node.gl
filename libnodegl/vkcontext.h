@@ -19,14 +19,18 @@
  * under the License.
  */
 
-#ifndef GLCONTEXT_H
-#define GLCONTEXT_H
+#ifndef VKCONTEXT_H
+#define VKCONTEXT_H
 
-#include <GL/glcorearb.h>
 #include <stdlib.h>
 
-#include "glfunctions.h"
+#include <shaderc/shaderc.h>
+#include <vulkan/vulkan.h>
+
+#include "darray.h"
 #include "nodegl.h"
+#include "rendertarget.h"
+#include "texture.h"
 
 #define NGLI_FEATURE_VERTEX_ARRAY_OBJECT          (1 << 0)
 #define NGLI_FEATURE_TEXTURE_3D                   (1 << 1)
@@ -57,20 +61,24 @@
 #define NGLI_FEATURE_DRAW_BUFFERS                 (1 << 26)
 #define NGLI_FEATURE_ROW_LENGTH                   (1 << 27)
 #define NGLI_FEATURE_SOFTWARE                     (1 << 28)
-#define NGLI_FEATURE_UINT_UNIFORMS                (1 << 29)
 
 #define NGLI_FEATURE_COMPUTE_SHADER_ALL (NGLI_FEATURE_COMPUTE_SHADER           | \
                                          NGLI_FEATURE_PROGRAM_INTERFACE_QUERY  | \
                                          NGLI_FEATURE_SHADER_IMAGE_LOAD_STORE  | \
                                          NGLI_FEATURE_SHADER_STORAGE_BUFFER_OBJECT)
 
+struct vk_swapchain_support {
+    VkSurfaceCapabilitiesKHR caps;
+    VkSurfaceFormatKHR *formats;
+    uint32_t nb_formats;
+    VkPresentModeKHR *present_modes;
+    uint32_t nb_present_modes;
+};
 
-struct glcontext {
-    /* GL context */
-    const struct glcontext_class *class;
-    void *priv_data;
-
+struct vkcontext {
     /* User options */
+    struct ngl_config config;
+
     int platform;
     int backend;
     int offscreen;
@@ -78,10 +86,11 @@ struct glcontext {
     int height;
     int samples;
 
-    /* GL api */
+    /* Vulkan api */
     int version;
 
-    /* GL features */
+    /* Vulkan features */
+#if 0
     int features;
     int max_texture_image_units;
     int max_compute_work_group_counts[3];
@@ -89,42 +98,80 @@ struct glcontext {
     int max_samples;
     int max_color_attachments;
     int max_draw_buffers;
+#endif
 
-    /* GL functions */
-    struct glfunctions funcs;
+    VkDevice device;
+    VkExtent2D extent;
+    VkRenderPass render_pass;
+    VkRenderPass conservative_render_pass;
+
+    VkPhysicalDeviceFeatures dev_features;
+
+    VkQueue graphic_queue;
+    VkQueue present_queue;
+
+    VkInstance instance;
+    VkDebugUtilsMessengerEXT report_callback;
+    VkPhysicalDevice physical_device;
+    VkPhysicalDeviceMemoryProperties phydev_mem_props;
+    int queue_family_graphics_id;
+    int queue_family_present_id;
+    VkSurfaceKHR surface;
+    struct vk_swapchain_support swapchain_support;
+    VkSurfaceFormatKHR surface_format;
+    VkPresentModeKHR present_mode;
+    VkSwapchainKHR swapchain;
+    VkImage *images;
+    uint32_t nb_images;
+    VkImageView *image_views;
+    uint32_t nb_image_views;
+    VkDeviceMemory *depth_device_memories;
+    VkImage *depth_images;
+    VkImageView *depth_image_views;
+    uint32_t nb_depth_images;
+    VkFramebuffer *framebuffers;
+    int nb_framebuffers;
+    VkSemaphore *sem_img_avail;
+    VkSemaphore *sem_render_finished;
+    VkFence *fences;
+    VkStructureType surface_create_type;
+
+    int prefered_depth_stencil_format;
+    VkFormat prefered_vk_depth_stencil_format;
+
+    uint32_t img_index;
+
+    int nb_in_flight_frames;
+    int current_frame;
+
+    VkCommandPool transient_command_buffer_pool;
+    VkFence transient_command_buffer_fence;
+
+    VkCommandPool command_buffer_pool;
+    VkCommandBuffer *command_buffers;
+    VkCommandBuffer cur_command_buffer;
+    int cur_command_buffer_state;
+
+    shaderc_compiler_t spirv_compiler;
+    shaderc_compile_options_t spirv_compiler_opts;
+
+    struct texture rt_color;
+    struct texture rt_depth_stencil;
+    struct rendertarget rt;
+
+    // Current framebuffer
+    VkFramebuffer cur_framebuffer;
+    VkRenderPass cur_render_pass;
+    VkExtent2D cur_render_area;
+    int cur_render_pass_state;
+    struct darray wait_semaphores;
+    struct darray wait_stages;
+    struct darray signal_semaphores;
+
 };
 
-struct glcontext_class {
-    int (*init)(struct glcontext *glcontext, uintptr_t display, uintptr_t window, uintptr_t handle);
-    int (*resize)(struct glcontext *glcontext, int width, int height);
-    int (*make_current)(struct glcontext *glcontext, int current);
-    void (*swap_buffers)(struct glcontext *glcontext);
-    int (*set_swap_interval)(struct glcontext *glcontext, int interval);
-    void (*set_surface_pts)(struct glcontext *glcontext, double t);
-    void* (*get_texture_cache)(struct glcontext *glcontext);
-    void* (*get_proc_address)(struct glcontext *glcontext, const char *name);
-    uintptr_t (*get_display)(struct glcontext *glcontext);
-    uintptr_t (*get_handle)(struct glcontext *glcontext);
-    GLuint (*get_default_framebuffer)(struct glcontext *glcontext);
-    void (*uninit)(struct glcontext *glcontext);
-    size_t priv_size;
-};
+int ngli_vk_find_memory_type(struct vkcontext *vk, uint32_t type_filter, VkMemoryPropertyFlags props);
+int ngli_vk_begin_transient_command(struct vkcontext *vk, VkCommandBuffer *command_buffer);
+int ngli_vk_execute_transient_command(struct vkcontext *vk, VkCommandBuffer command_buffer);
 
-struct glcontext *ngli_glcontext_new(const struct ngl_config *config);
-int ngli_glcontext_make_current(struct glcontext *glcontext, int current);
-void ngli_glcontext_swap_buffers(struct glcontext *glcontext);
-int ngli_glcontext_set_swap_interval(struct glcontext *glcontext, int interval);
-void ngli_glcontext_set_surface_pts(struct glcontext *glcontext, double t);
-int ngli_glcontext_resize(struct glcontext *glcontext, int width, int height);
-void *ngli_glcontext_get_proc_address(struct glcontext *glcontext, const char *name);
-void *ngli_glcontext_get_texture_cache(struct glcontext *glcontext);
-uintptr_t ngli_glcontext_get_display(struct glcontext *glcontext);
-uintptr_t ngli_glcontext_get_handle(struct glcontext *glcontext);
-GLuint ngli_glcontext_get_default_framebuffer(struct glcontext *glcontext);
-void ngli_glcontext_freep(struct glcontext **glcontext);
-int ngli_glcontext_check_extension(const char *extension, const char *extensions);
-int ngli_glcontext_check_gl_error(const struct glcontext *glcontext, const char *context);
-
-#include "glwrappers.h"
-
-#endif /* GLCONTEXT_H */
+#endif /* VKCONTEXT_H */

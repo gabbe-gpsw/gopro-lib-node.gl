@@ -196,6 +196,16 @@ static int camera_update(struct ngl_node *node, double t)
         ngli_mat4_identity(s->projection_matrix);
     }
 
+#ifdef VULKAN_BACKEND
+    NGLI_ALIGNED_MAT(gl_to_vk_matrix) = {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f,-1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.5f, 0.5f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    };
+    ngli_mat4_mul(s->projection_matrix, gl_to_vk_matrix, s->projection_matrix);
+#endif
+
     return ngli_node_update(child, t);
 }
 

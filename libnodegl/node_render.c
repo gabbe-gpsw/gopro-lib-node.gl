@@ -24,12 +24,15 @@
 #include <string.h>
 #include <limits.h>
 
+#include "darray.h"
 #include "hmap.h"
 #include "log.h"
 #include "nodegl.h"
 #include "nodes.h"
+#include "params.h"
 #include "pass.h"
 #include "topology.h"
+#include "type.h"
 #include "utils.h"
 
 struct render_priv {

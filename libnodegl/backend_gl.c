@@ -401,6 +401,10 @@ static int gl_post_draw(struct ngl_ctx *s, double t)
     return ret;
 }
 
+static void gl_wait_idle(struct ngl_ctx *s)
+{
+}
+
 static void gl_destroy(struct ngl_ctx *s)
 {
     ngli_pgcache_reset(&s->pgcache);
@@ -418,6 +422,7 @@ const struct backend ngli_backend_gl = {
     .resize       = gl_resize,
     .pre_draw     = gl_pre_draw,
     .post_draw    = gl_post_draw,
+    .wait_idle    = gl_wait_idle,
     .destroy      = gl_destroy,
 };
 
@@ -427,5 +432,6 @@ const struct backend ngli_backend_gles = {
     .resize       = gl_resize,
     .pre_draw     = gl_pre_draw,
     .post_draw    = gl_post_draw,
+    .wait_idle    = gl_wait_idle,
     .destroy      = gl_destroy,
 };

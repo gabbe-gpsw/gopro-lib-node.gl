@@ -35,6 +35,8 @@ PYTHON     ?= python$(if $(shell which python$(PYTHON_MAJOR) 2> /dev/null),$(PYT
 TAR        ?= tar
 TARGET_OS  ?= $(shell uname -s)
 ARCH       ?= $(shell uname -m)
+#BACKEND    ?= gl
+BACKEND    ?= vk
 
 ifneq ($(shell $(PYTHON) -c "import sys;print(sys.version_info.major)"),$(PYTHON_MAJOR))
 $(error "Python $(PYTHON_MAJOR) not found")
@@ -72,3 +74,7 @@ endif
 ifeq ($(TARGET_OS),MinGW-w64)
 	EXESUF = .exe
 endif # MinGW
+
+ifeq ($(BACKEND),vk)
+	PROJECT_CFLAGS += -DVULKAN_BACKEND
+endif
