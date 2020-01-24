@@ -523,10 +523,13 @@ static int register_pipeline(struct pass *s)
 {
     struct ngl_ctx *ctx = s->ctx;
 
+    struct pipeline_graphics pipeline_graphics = s->pipeline_graphics;
+    pipeline_graphics.config = ctx->graphicconfig;
+
     struct pipeline_params pipeline_params = {
         .type          = s->pipeline_type,
-        .graphics      = s->pipeline_graphics,
         .compute       = s->pipeline_compute,
+        .graphics      = pipeline_graphics,
         .program       = s->pipeline_program,
         .attributes    = ngli_darray_data(&s->pipeline_attributes),
         .nb_attributes = ngli_darray_count(&s->pipeline_attributes),
@@ -622,7 +625,18 @@ int ngli_pass_init(struct pass *s, struct ngl_ctx *ctx, const struct pass_params
         (ret = register_blocks(s)) < 0)
         return ret;
 
-    return register_pipeline(s);
+    if (s->pipeline_type == NGLI_PIPELINE_TYPE_COMPUTE)
+        return register_pipeline(s);
+
+    return 0;
+}
+
+int ngli_pass_prepare(struct pass *s)
+{
+    if (s->pipeline_type == NGLI_PIPELINE_TYPE_GRAPHICS)
+        return register_pipeline(s);
+
+    return 0;
 }
 
 #define NODE_TYPE_DEFAULT 0
@@ -729,10 +743,22 @@ int ngli_pass_update(struct pass *s, double t)
 
 static struct pipeline_desc *get_pipeline_desc(struct pass *s)
 {
+    struct ngl_ctx *ctx = s->ctx;
+
     struct pipeline_desc *descs = ngli_darray_data(&s->pipeline_descs);
     int nb_descs = ngli_darray_count(&s->pipeline_descs);
     if (nb_descs == 1)
         return &descs[0];
+
+    for (int i = 0; i < nb_descs; i++) {
+        struct pipeline_desc *desc = &descs[i];
+        struct pipeline *pipeline = &desc->pipeline;
+        struct pipeline_graphics *graphics = &pipeline->graphics;
+        if (!memcmp(&graphics->config, &ctx->graphicconfig, sizeof(ctx->graphicconfig) - 4*4)) {
+            return desc;
+        }
+    }
+
     return NULL;
 }
 
