@@ -609,7 +609,23 @@ void ngli_pipeline_exec(struct pipeline *s)
 
     if (s->type == NGLI_PIPELINE_TYPE_GRAPHICS) {
         struct pipeline_graphics *graphics = &s->graphics;
-        ngli_glstate_update(ctx, &graphics->config);
+        LOG(ERROR, "ctx %d %d %d %d %d %d",
+            ctx->graphicconfig.blend,
+            ctx->graphicconfig.blend_dst_factor,
+            ctx->graphicconfig.blend_dst_factor_a,
+            ctx->graphicconfig.blend_op,
+            ctx->graphicconfig.blend_src_factor,
+            ctx->graphicconfig.blend_src_factor_a);
+
+        LOG(ERROR, "lcl %d %d %d %d %d %d",
+            graphics->config.blend,
+            graphics->config.blend_dst_factor,
+            graphics->config.blend_dst_factor_a,
+            graphics->config.blend_op,
+            graphics->config.blend_src_factor,
+            graphics->config.blend_src_factor_a);
+
+        ngli_glstate_update(ctx, &ctx->graphicconfig);
     }
 
     use_program(s, gl);

@@ -525,6 +525,13 @@ static int register_pipeline(struct pass *s)
 
     struct pipeline_graphics pipeline_graphics = s->pipeline_graphics;
     pipeline_graphics.config = ctx->graphicconfig;
+        LOG(ERROR, "rgt %d %d %d %d %d %d",
+            ctx->graphicconfig.blend,
+            ctx->graphicconfig.blend_dst_factor,
+            ctx->graphicconfig.blend_dst_factor_a,
+            ctx->graphicconfig.blend_op,
+            ctx->graphicconfig.blend_src_factor,
+            ctx->graphicconfig.blend_src_factor_a);
 
     struct pipeline_params pipeline_params = {
         .type          = s->pipeline_type,
