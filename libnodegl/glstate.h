@@ -24,6 +24,7 @@
 
 #include "glcontext.h"
 #include "glincludes.h"
+#include "graphicconfig.h"
 
 struct glstate {
     GLenum blend;
@@ -59,6 +60,7 @@ struct glstate {
 void ngli_glstate_probe(const struct glcontext *gl,
                         struct glstate *glstate);
 
-void ngli_honor_pending_glstate(struct ngl_ctx *ctx);
+void ngli_glstate_update(struct ngl_ctx *ctx,
+                         const struct graphicconfig *config);
 
 #endif
