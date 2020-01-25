@@ -246,7 +246,7 @@
         - [cull_face, bool]
         - [cull_face_mode, flags]
         - [scissor_test, bool]
-        - [scissor, vec4]
+        - [scissor, ivec4]
 
 - Group:
     optional:

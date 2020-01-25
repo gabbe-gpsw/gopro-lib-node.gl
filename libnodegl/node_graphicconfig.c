@@ -58,13 +58,13 @@ struct graphicconfig_priv {
     int cull_face_mode;
 
     int scissor_test;
-    float scissor[4];
+    int scissor[4];
     int use_scissor;
 
     struct graphicconfig graphicconfig;
 };
 
-#define DEFAULT_SCISSOR {-1.0f, -1.0f, -1.0f, -1.0f}
+#define DEFAULT_SCISSOR {-1, -1, -1, -1}
 
 static const struct param_choices blend_factor_choices = {
     .name = "blend_factor",
@@ -210,7 +210,7 @@ static const struct node_param graphicconfig_params[] = {
                            .desc=NGLI_DOCSTRING("face culling mode")},
     {"scissor_test",       PARAM_TYPE_BOOL,   OFFSET(scissor_test),       {.i64=-1},
                            .desc=NGLI_DOCSTRING("enable scissor testing")},
-    {"scissor",            PARAM_TYPE_VEC4, OFFSET(scissor), {.vec=DEFAULT_SCISSOR},
+    {"scissor",            PARAM_TYPE_IVEC4, OFFSET(scissor), {.ivec=DEFAULT_SCISSOR},
                            .desc=NGLI_DOCSTRING("define an area where all pixels outside are discarded")},
     {NULL}
 };
@@ -283,8 +283,7 @@ static void honor_config(struct ngl_node *node, int restore)
 
         COPY_PARAM(scissor_test);
         if (s->use_scissor) {
-            for (int i = 0; i < 4; i++)
-                pending->scissor[i] = s->scissor[i];
+            memcpy(pending->scissor, s->scissor, sizeof(pending->scissor));
         }
     }
 }
