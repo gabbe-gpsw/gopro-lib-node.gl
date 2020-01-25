@@ -323,7 +323,7 @@ Parameter | Ctor. | Live-chg. | Type | Description | Default
 `cull_face` |  |  | [`bool`](#parameter-types) | enable face culling | `unset`
 `cull_face_mode` |  |  | [`cull_face`](#cull_face-choices) | face culling mode | `unset`
 `scissor_test` |  |  | [`bool`](#parameter-types) | enable scissor testing | `unset`
-`scissor` |  |  | [`vec4`](#parameter-types) | define an area where all pixels outside are discarded | (`-1`,`-1`,`-1`,`-1`)
+`scissor` |  |  | [`ivec4`](#parameter-types) | define an area where all pixels outside are discarded | 
 
 
 **Source**: [node_graphicconfig.c](/libnodegl/node_graphicconfig.c)

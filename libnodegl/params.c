@@ -62,6 +62,21 @@ const struct param_specs ngli_params_specs[] = {
         .size = sizeof(void *) + sizeof(int),
         .desc = NGLI_DOCSTRING("Agnostic data buffer"),
     },
+    [PARAM_TYPE_IVEC2] = {
+        .name = "ivec2",
+        .size = sizeof(int[2]),
+        .desc = NGLI_DOCSTRING("2 integers"),
+    },
+    [PARAM_TYPE_IVEC3] = {
+        .name = "ivec3",
+        .size = sizeof(int[3]),
+        .desc = NGLI_DOCSTRING("3 integers"),
+    },
+    [PARAM_TYPE_IVEC4] = {
+        .name = "ivec4",
+        .size = sizeof(int[4]),
+        .desc = NGLI_DOCSTRING("4 integers"),
+    },
     [PARAM_TYPE_VEC2] = {
         .name = "vec2",
         .size = sizeof(float[2]),
@@ -251,6 +266,21 @@ void ngli_params_bstr_print_val(struct bstr *b, uint8_t *base_ptr, const struct 
             ngli_bstr_print(b, "%" PRId64, v);
             break;
         }
+        case PARAM_TYPE_IVEC2: {
+            const int *iv = (const int *)(base_ptr + par->offset);
+            ngli_bstr_print(b, "(%d,%d)", iv[0], iv[1]);
+            break;
+        }
+        case PARAM_TYPE_IVEC3: {
+            const int *iv = (const int *)(base_ptr + par->offset);
+            ngli_bstr_print(b, "(%d,%d,%d)", iv[0], iv[1], iv[2]);
+            break;
+        }
+        case PARAM_TYPE_IVEC4: {
+            const int *iv = (const int *)(base_ptr + par->offset);
+            ngli_bstr_print(b, "(%d,%d,%d,%d)", iv[0], iv[1], iv[2], iv[3]);
+            break;
+        }
         case PARAM_TYPE_VEC2: {
             const float *v = (const float *)(base_ptr + par->offset);
             ngli_bstr_print(b, "(%g,%g)", v[0], v[1]);
@@ -406,6 +436,24 @@ int ngli_params_set(uint8_t *base_ptr, const struct node_param *par, va_list *ap
                 size = 0;
             }
             memcpy(dstp + sizeof(void *), &size, sizeof(size));
+            break;
+        }
+        case PARAM_TYPE_IVEC2: {
+            const int *iv = va_arg(*ap, const int *);
+            LOG(VERBOSE, "set %s to (%d,%d)", par->key, iv[0], iv[1]);
+            memcpy(dstp, iv, 2 * sizeof(*iv));
+            break;
+        }
+        case PARAM_TYPE_IVEC3: {
+            const int *iv = va_arg(*ap, const int *);
+            LOG(VERBOSE, "set %s to (%d,%d,%d)", par->key, iv[0], iv[1], iv[2]);
+            memcpy(dstp, iv, 3 * sizeof(*iv));
+            break;
+        }
+        case PARAM_TYPE_IVEC4: {
+            const int *iv = va_arg(*ap, const int *);
+            LOG(VERBOSE, "set %s to (%d,%d,%d,%d)", par->key, iv[0], iv[1], iv[2], iv[3]);
+            memcpy(dstp, iv, 4 * sizeof(*iv));
             break;
         }
         case PARAM_TYPE_VEC2: {
@@ -565,6 +613,11 @@ int ngli_params_set_defaults(uint8_t *base_ptr, const struct node_param *params)
                     break;
                 case PARAM_TYPE_STR:
                     ret = ngli_params_vset(base_ptr, par, par->def_value.str);
+                    break;
+                case PARAM_TYPE_IVEC2:
+                case PARAM_TYPE_IVEC3:
+                case PARAM_TYPE_IVEC4:
+                    ret = ngli_params_vset(base_ptr, par, par->def_value.ivec);
                     break;
                 case PARAM_TYPE_VEC2:
                 case PARAM_TYPE_VEC3:

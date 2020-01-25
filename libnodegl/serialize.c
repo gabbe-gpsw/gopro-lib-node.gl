@@ -192,6 +192,26 @@ static void serialize_options(struct hmap *nlist,
                 }
                 break;
             }
+            case PARAM_TYPE_IVEC2:
+            case PARAM_TYPE_IVEC3:
+            case PARAM_TYPE_IVEC4: {
+                const int *iv = (int *)(priv + p->offset);
+                const int n = p->type - PARAM_TYPE_IVEC2 + 2;
+                if (constructor) {
+                    ngli_bstr_print(b, " ");
+                    for (int i = 0; i < n; i++) {
+                        ngli_bstr_print(b, "%s", i ? "," : "");
+                        ngli_bstr_print(b, "%d", iv[i]);
+                    }
+                } else if (memcmp(iv, p->def_value.ivec, n * sizeof(*iv))) {
+                    ngli_bstr_print(b, " %s:", p->key);
+                    for (int i = 0; i < n; i++) {
+                        ngli_bstr_print(b, "%s", i ? "," : "");
+                        ngli_bstr_print(b, "%d", iv[i]);
+                    }
+                }
+                break;
+            }
             case PARAM_TYPE_VEC2:
             case PARAM_TYPE_VEC3:
             case PARAM_TYPE_VEC4: {

@@ -33,6 +33,9 @@ enum {
     PARAM_TYPE_DBL,
     PARAM_TYPE_STR,
     PARAM_TYPE_DATA,
+    PARAM_TYPE_IVEC2,
+    PARAM_TYPE_IVEC3,
+    PARAM_TYPE_IVEC4,
     PARAM_TYPE_VEC2,
     PARAM_TYPE_VEC3,
     PARAM_TYPE_VEC4,
@@ -77,6 +80,7 @@ struct node_param {
         double dbl;
         const char *str;
         void *p;
+        int ivec[4];
         float vec[4];
         float mat[4*4];
         int r[2];

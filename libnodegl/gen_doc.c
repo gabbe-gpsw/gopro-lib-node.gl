@@ -124,6 +124,21 @@ static char *get_default_str(const struct node_param *p)
         case PARAM_TYPE_I64:
             ngli_bstr_print(b, "`%" PRId64 "`", p->def_value.i64);
             break;
+        case PARAM_TYPE_IVEC2: {
+            const int *iv = p->def_value.ivec;
+            ngli_bstr_print(b, "(`%d`,`%d`)", iv[0], iv[1]);
+            break;
+        }
+        case PARAM_TYPE_IVEC3: {
+            const int *iv = p->def_value.ivec;
+            ngli_bstr_print(b, "(`%d`,`%d`,`%d`)", iv[0], iv[1], iv[2]);
+            break;
+        }
+        case PARAM_TYPE_IVEC4: {
+            const int *iv = p->def_value.ivec;
+            ngli_bstr_print(b, "(`%d`,`%d`,`%d`,`%d`)", iv[0], iv[1], iv[2], iv[3]);
+            break;
+        }
         case PARAM_TYPE_VEC2: {
             const float *v = p->def_value.vec;
             ngli_bstr_print(b, "(`%g`,`%g`)", v[0], v[1]);
