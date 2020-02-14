@@ -305,6 +305,11 @@ static int gl_configure(struct ngl_ctx *s, const struct ngl_config *config)
             return ret;
     }
 
+    s->default_rendertarget_desc.color_formats[0] = NGLI_FORMAT_R8G8B8A8_UNORM;
+    s->default_rendertarget_desc.depth_stencil_format = NGLI_FORMAT_D24_UNORM_S8_UINT;
+    s->default_rendertarget_desc.samples = gl->samples;
+    s->rendertarget_desc = &s->default_rendertarget_desc;
+
     ngli_glstate_probe(gl, &s->glstate);
 
     ret = ngli_pgcache_init(&s->pgcache, s);
