@@ -28,6 +28,13 @@
 
 #define NGLI_MAX_COLOR_ATTACHMENTS 8
 
+struct rendertarget_desc {
+    int color_formats[NGLI_MAX_COLOR_ATTACHMENTS];
+    int nb_color_formats;
+    int depth_stencil_format;
+    int samples;
+};
+
 struct rendertarget_params {
     int width;
     int height;

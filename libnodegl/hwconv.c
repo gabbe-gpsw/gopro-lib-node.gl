@@ -67,6 +67,10 @@ int ngli_hwconv_init(struct hwconv *hwconv, struct ngl_ctx *ctx,
 
     struct texture *texture = dst_image->planes[0];
 
+    struct rendertarget_desc rt_desc = {
+        .color_formats[0] = texture->format,
+        .nb_color_formats = 1,
+    };
     struct rendertarget_params rt_params = {
         .width = dst_image->params.width,
         .height = dst_image->params.height,
@@ -125,6 +129,7 @@ int ngli_hwconv_init(struct hwconv *hwconv, struct ngl_ctx *ctx,
             .topology    = NGLI_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN,
             .nb_vertices = 4,
             .state       = ctx->graphicstate,
+            .rt_desc     = rt_desc,
         },
     };
 
