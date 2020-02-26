@@ -32,6 +32,8 @@
                                               NODEGL_VERSION_MINOR, \
                                               NODEGL_VERSION_MICRO)
 
+#define NGL_SERIAL_VERSION 0  /* Serialized scene version compatibility */
+
 #include <stdarg.h>
 #include <stdint.h>
 

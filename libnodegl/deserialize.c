@@ -496,16 +496,14 @@ struct ngl_node *ngl_node_deserialize(const char *str)
     char *sstart = s;
     char *send = s + strlen(s);
 
-    int major, minor, micro;
-    int n = sscanf(s, "# Node.GL v%d.%d.%d", &major, &minor, &micro);
-    if (n != 3) {
+    int version;
+    int n = sscanf(s, "# Node.GL v%d", &version);
+    if (n != 1) {
         LOG(ERROR, "invalid serialized scene");
         goto end;
     }
-    if (NODEGL_VERSION_INT != NODEGL_GET_VERSION(major, minor, micro)) {
-        LOG(ERROR, "mismatching version: %d.%d.%d != %d.%d.%d",
-            major, minor, micro,
-            NODEGL_VERSION_MAJOR, NODEGL_VERSION_MINOR, NODEGL_VERSION_MICRO);
+    if (version != NGL_SERIAL_VERSION) {
+        LOG(ERROR, "mismatching version: %d != %d", version, NGL_SERIAL_VERSION);
         goto end;
     }
     s += strcspn(s, "\n");
