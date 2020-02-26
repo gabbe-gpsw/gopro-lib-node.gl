@@ -22,15 +22,15 @@
 #ifndef NODEGL_H
 #define NODEGL_H
 
-#define NODEGL_VERSION_MAJOR 0
-#define NODEGL_VERSION_MINOR 0
-#define NODEGL_VERSION_MICRO 0
+#define NGL_VERSION_MAJOR 0
+#define NGL_VERSION_MINOR 0
+#define NGL_VERSION_MICRO 0
 
-#define NODEGL_GET_VERSION(major, minor, micro) ((major)<<16 | (minor)<<8 | (micro))
+#define NGL_GET_VERSION(major, minor, micro) ((major)<<16 | (minor)<<8 | (micro))
 
-#define NODEGL_VERSION_INT NODEGL_GET_VERSION(NODEGL_VERSION_MAJOR, \
-                                              NODEGL_VERSION_MINOR, \
-                                              NODEGL_VERSION_MICRO)
+#define NGL_VERSION_INT NGL_GET_VERSION(NGL_VERSION_MAJOR, \
+                                        NGL_VERSION_MINOR, \
+                                        NGL_VERSION_MICRO)
 
 #define NGL_SERIAL_VERSION 0  /* Serialized scene version compatibility */
 

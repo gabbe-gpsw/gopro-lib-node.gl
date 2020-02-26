@@ -212,7 +212,7 @@ $(LD_SYM_FILE):
 # pkg-config
 #
 define headver
-$(shell sed -nE 's/^\#define NODEGL_VERSION_$(1)[^0-9]*([0-9]*)/\1/p' nodegl.h)
+$(shell sed -nE 's/^\#define NGL_VERSION_$(1)[^0-9]*([0-9]*)/\1/p' nodegl.h)
 endef
 
 $(LIB_PCNAME): VERSION = $(call headver,MAJOR).$(call headver,MINOR).$(call headver,MICRO)
