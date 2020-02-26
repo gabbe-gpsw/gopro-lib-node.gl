@@ -300,6 +300,60 @@ tests: $(addprefix run_test_,$(TESTS))
 
 
 #
+# Version management
+#
+define extract_version_digit
+$(shell sed -n 's/^#define NGL_VERSION_$(1) \([0-9]\+\)/\1/p' nodegl.h)
+endef
+
+define set_version
+$(shell sed -e 's/^#define NGL_VERSION_MAJOR.*/#define NGL_VERSION_MAJOR $(1)/'
+            -e 's/^#define NGL_VERSION_MINOR.*/#define NGL_VERSION_MINOR $(2)/'
+            -e 's/^#define NGL_VERSION_MICRO.*/#define NGL_VERSION_MICRO $(3)/'
+            -i nodegl.h)
+endef
+
+define bump_digit
+$(shell echo $$(($(1)+1)))
+endef
+
+BUMP_RULES = $(addprefix version_,bump_major bump_minor bump_micro commit_tag)
+$(BUMP_RULES): CUR_MAJOR=$(call extract_version_digit,MAJOR)
+$(BUMP_RULES): CUR_MINOR=$(call extract_version_digit,MINOR)
+$(BUMP_RULES): CUR_MICRO=$(call extract_version_digit,MICRO)
+$(BUMP_RULES): CUR_VERSION=$(CUR_MAJOR).$(CUR_MINOR).$(CUR_MICRO)
+$(BUMP_RULES): NEW_VERSION=$(NEW_MAJOR).$(NEW_MINOR).$(NEW_MICRO)
+
+version_bump_major: NEW_MAJOR=$(call bump_digit,$(CUR_MAJOR))
+version_bump_major: NEW_MINOR=0
+version_bump_major: NEW_MICRO=0
+version_bump_major:
+	@echo "Major bump: $(CUR_VERSION) -> $(NEW_VERSION)"
+	$(call set_version,$(NEW_MAJOR),$(NEW_MINOR),$(NEW_MICRO))
+
+version_bump_minor: NEW_MAJOR=$(CUR_MAJOR)
+version_bump_minor: NEW_MINOR=$(call bump_digit,$(CUR_MINOR))
+version_bump_minor: NEW_MICRO=0
+version_bump_minor:
+	@echo "Minor bump: $(CUR_VERSION) -> $(NEW_VERSION)"
+	$(call set_version,$(NEW_MAJOR),$(NEW_MINOR),$(NEW_MICRO))
+
+version_bump_micro: NEW_MAJOR=$(CUR_MAJOR)
+version_bump_micro: NEW_MINOR=$(CUR_MINOR)
+version_bump_micro: NEW_MICRO=$(call bump_digit,$(CUR_MICRO))
+version_bump_micro:
+	@echo "Micro bump: $(CUR_VERSION) -> $(NEW_VERSION)"
+	$(call set_version,$(NEW_MAJOR),$(NEW_MINOR),$(NEW_MICRO))
+
+version_commit_tag:
+	sed 's/\[Unreleased\]/[$(CUR_VERSION)] - $(shell date -I)/' -i ../CHANGELOG.md
+	git add nodegl.h ../CHANGELOG.md
+	git commit -m "Release $(CUR_VERSION)"
+	git tag v$(CUR_VERSION)
+
+.PHONY: $(BUMP_RULES) version_commit_tag
+
+#
 # Misc/general
 #
 clean:
