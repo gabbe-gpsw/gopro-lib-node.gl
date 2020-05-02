@@ -36,7 +36,7 @@ def _render_buffer(w, h):
     buf = ngl.BufferUByte(data=data)
     texture = ngl.Texture2D(width=w, height=h, data_src=buf)
     render = ngl.Render(ngl.Quad())
-    render.update_textures(tex0=texture)
+    render.update_fragment_resources(tex0=texture)
     return render
 
 
@@ -65,7 +65,7 @@ def texture_data_animated(cfg, dim=8):
     quad = ngl.Quad((-1, -1, 0), (2, 0, 0), (0, 2, 0))
     prog = ngl.Program()
     render = ngl.Render(quad, prog)
-    render.update_textures(tex0=random_tex)
+    render.update_fragment_resources(tex0=random_tex)
     return render
 
 
@@ -148,7 +148,7 @@ def _get_texture_cubemap_from_mrt_scene(cfg, samples=0):
     render_cubemap_frag = glsl_header + _RENDER_CUBEMAP_FRAG
     program = ngl.Program(vertex=render_cubemap_vert, fragment=render_cubemap_frag)
     render = ngl.Render(quad, program)
-    render.update_textures(tex0=cube)
+    render.update_fragment_resources(tex0=cube)
 
     return ngl.Group(children=(rtt, render))
 
@@ -177,7 +177,7 @@ def texture_cubemap(cfg):
     program = ngl.Program(vertex=render_cubemap_vert, fragment=render_cubemap_frag)
     quad = ngl.Quad((-1, -1, 0), (2, 0, 0), (0, 2, 0))
     render = ngl.Render(quad, program)
-    render.update_textures(tex0=cube)
+    render.update_fragment_resources(tex0=cube)
     return render
 
 
@@ -200,14 +200,14 @@ def texture_clear_and_scissor(cfg):
     color = ngl.UniformVec4(COLORS['white'])
     program = ngl.Program(fragment=cfg.get_frag('color'))
     render = ngl.Render(quad, program)
-    render.update_uniforms(color=color)
+    render.update_fragment_resources(color=color)
     graphic_config = ngl.GraphicConfig(render, scissor_test=True, scissor=(0, 0, 0, 0))
 
     texture = ngl.Texture2D(width=64, height=64)
     rtt = ngl.RenderToTexture(ngl.Identity(), [texture], clear_color=COLORS['orange'])
 
     render = ngl.Render(quad)
-    render.update_textures(tex0=texture)
+    render.update_fragment_resources(tex0=texture)
 
     return ngl.Group(children=(graphic_config, rtt, render))
 
@@ -221,13 +221,13 @@ def texture_scissor(cfg):
     color = ngl.UniformVec4(COLORS['orange'])
     program = ngl.Program(fragment=cfg.get_frag('color'))
     render = ngl.Render(quad, program)
-    render.update_uniforms(color=color)
+    render.update_fragment_resources(color=color)
     graphic_config = ngl.GraphicConfig(render, scissor_test=True, scissor=(32, 32, 32, 32))
     texture = ngl.Texture2D(width=64, height=64)
     rtt = ngl.RenderToTexture(graphic_config, [texture])
 
     render = ngl.Render(quad)
-    render.update_textures(tex0=texture)
+    render.update_fragment_resources(tex0=texture)
 
     return ngl.Group(children=(rtt, render))
 
@@ -287,7 +287,7 @@ def texture_3d(cfg):
     quad = ngl.Quad((-1, -1, 0), (2, 0, 0), (0, 2, 0))
     program = ngl.Program(vertex=render_cubemap_vert, fragment=render_cubemap_frag)
     render = ngl.Render(quad, program)
-    render.update_textures(tex0=texture)
+    render.update_fragment_resources(tex0=texture)
     return render
 
 
@@ -359,7 +359,7 @@ def texture_mipmap(cfg, show_dbg_points=False):
 
     quad = ngl.Quad((-1, -1, 0), (2, 0, 0), (0, 2, 0))
     render = ngl.Render(quad, program)
-    render.update_textures(tex0=texture)
+    render.update_fragment_resources(tex0=texture)
 
     group = ngl.Group(children=(render,))
     if show_dbg_points:

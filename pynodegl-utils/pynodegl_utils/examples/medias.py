@@ -17,14 +17,14 @@ def centered_media(cfg, uv_corner=(0, 0), uv_width=(1, 0), uv_height=(0, 1), pro
     t = ngl.Texture2D(data_src=m)
     p = ngl.Program()
     render = ngl.Render(q, p)
-    render.update_textures(tex0=t)
+    render.update_fragment_resources(tex0=t)
 
     if progress_bar:
         p.set_fragment(cfg.get_frag('progress-bar'))
 
         media_duration = ngl.UniformFloat(m0.duration)
         ar = ngl.UniformFloat(cfg.aspect_ratio_float)
-        render.update_uniforms(media_duration=media_duration, ar=ar)
+        render.update_fragment_resources(media_duration=media_duration, ar=ar)
     return render
 
 
@@ -44,7 +44,7 @@ def playback_speed(cfg, speed=1.0):
     m = ngl.Media(m0.filename, time_anim=ngl.AnimatedTime(time_animkf))
     t = ngl.Texture2D(data_src=m)
     render = ngl.Render(q)
-    render.update_textures(tex0=t)
+    render.update_fragment_resources(tex0=t)
     return render
 
 
@@ -85,7 +85,7 @@ def time_remapping(cfg):
     m.set_sxplayer_min_level('verbose')
     t = ngl.Texture2D(data_src=m)
     r = ngl.Render(q)
-    r.update_textures(tex0=t)
+    r.update_fragment_resources(tex0=t)
 
     time_ranges = [
         ngl.TimeRangeModeNoop(0),

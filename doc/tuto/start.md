@@ -53,7 +53,7 @@ def test_demo(cfg):
     media = ngl.Media(cfg.medias[0].filename)
     texture = ngl.Texture2D(data_src=media)
     render = ngl.Render(geometry)
-    render.update_textures(tex0=texture)
+    render.update_fragment_resources(tex0=texture)
     return render
 ```
 
@@ -127,8 +127,7 @@ def test_demo(cfg):
     prog = ngl.Program(fragment=frag)
     ucolor = ngl.UniformVec4(value=(1,0,0,1))
     render = ngl.Render(geometry, prog)
-    render.update_textures(tex0=texture)
-    render.update_uniforms(color=ucolor)
+    render.update_fragment_resources(tex0=texture, color=ucolor)
     return render
 ```
 
@@ -169,7 +168,7 @@ this:
 
 ```python
     ucolor = ngl.UniformVec4(value=(1,0,0,1))
-    render.update_uniforms(color=ucolor)
+    render.update_fragment_resources(color=ucolor)
 ```
 
 In the GLSL code, you will access it by replacing the `vec4 color` local to the
@@ -228,7 +227,7 @@ long, but it can be changed directly in your function. We want to associate
 And then use this animated float directly on the render:
 
 ```python
-    render.update_uniforms(mixval=mixval_anim)
+    render.update_fragment_resources(mixval=mixval_anim)
 ```
 
 Just like `color`, we will transmit it to the shader through uniforms.
@@ -305,15 +304,14 @@ def test_demo(cfg, color=(1,0,0,1)):
     texture = ngl.Texture2D(data_src=media)
     prog = ngl.Program(fragment=frag)
     render = ngl.Render(geometry, prog)
-    render.update_textures(tex0=texture)
+    render.update_fragment_resources(tex0=texture)
 
     # Animated mixing color
     mixval_animkf = [ngl.AnimKeyFrameFloat(0, 0),
                      ngl.AnimKeyFrameFloat(cfg.duration, 1)]
     mixval_anim = ngl.AnimatedFloat(mixval_animkf)
     ucolor = ngl.UniformVec4(color)
-    render.update_uniforms(color=ucolor)
-    render.update_uniforms(mixval=mixval_anim)
+    render.update_fragment_resources(color=ucolor, mixval=mixval_anim)
 
     # Translation
     translate_animkf = [ngl.AnimKeyFrameVec3(0, (-1, 0, 0)),
@@ -370,7 +368,7 @@ def test_timeranges(cfg):
     # Associate a different color for each shape
     for r in renders:
         color = [random.random() for i in range(3)] + [1]
-        r.update_uniforms(color=ngl.UniformVec4(value=color))
+        r.update_fragment_resources(color=ngl.UniformVec4(value=color))
 
     # Move them in different places
     translates = [

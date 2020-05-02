@@ -54,7 +54,7 @@ def _get_time_scene(cfg):
     m = ngl.Media(m0.filename, time_anim=ngl.AnimatedTime(media_animkf))
     t = ngl.Texture2D(data_src=m)
     r = ngl.Render(q)
-    r.update_textures(tex0=t)
+    r.update_fragment_resources(tex0=t)
 
     time_ranges = [
         ngl.TimeRangeModeNoop(0),
@@ -82,7 +82,7 @@ def flat_remap(cfg):
     m = ngl.Media(m0.filename, time_anim=ngl.AnimatedTime(media_animkf))
     t = ngl.Texture2D(data_src=m)
     render = ngl.Render(q)
-    render.update_textures(tex0=t)
+    render.update_fragment_resources(tex0=t)
     return render
 
 
