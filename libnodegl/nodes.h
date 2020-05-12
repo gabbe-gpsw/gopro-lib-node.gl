@@ -232,6 +232,13 @@ int ngli_node_buffer_ref(struct ngl_node *node);
 void ngli_node_buffer_unref(struct ngl_node *node);
 int ngli_node_buffer_upload(struct ngl_node *node);
 
+enum {
+    NGLI_PRECISION_AUTO,
+    NGLI_PRECISION_HIGH,
+    NGLI_PRECISION_MEDIUM,
+    NGLI_PRECISION_LOW,
+};
+
 struct variable_priv {
     union {
         double dbl;
@@ -345,6 +352,13 @@ struct transform_priv {
 
 struct identity_priv {
     NGLI_ALIGNED_MAT(modelview_matrix);
+};
+
+struct resourceprops_priv {
+    int precision;
+    int as_image;
+    int writable;
+    int variadic;
 };
 
 enum easing_id {
