@@ -51,7 +51,7 @@ define capitalize
 $(shell echo $1 | tr a-z- A-Z_)
 endef
 
-PROJECT_CFLAGS := $(CFLAGS) -Wall -O2 -Werror=missing-prototypes \
+PROJECT_CFLAGS := $(CFLAGS) -Wall -Og -Werror=missing-prototypes \
                   -std=c99 \
                   -DTARGET_$(call capitalize,$(TARGET_OS)) \
                   -DARCH_$(call capitalize,$(ARCH))
@@ -63,7 +63,7 @@ ifeq ($(COVERAGE),yes)
 	DEBUG = yes
 endif
 ifeq ($(DEBUG),yes)
-	PROJECT_CFLAGS += -g
+	PROJECT_CFLAGS += -ggdb3
 endif
 ifeq ($(SMALL),yes)
 	PROJECT_CFLAGS += -DCONFIG_SMALL
