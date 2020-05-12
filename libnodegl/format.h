@@ -95,6 +95,8 @@ int ngli_format_get_bytes_per_pixel(int format);
 
 int ngli_format_get_nb_comp(int format);
 
+const char *ngli_format_get_glsl_format(int format);
+
 int ngli_format_get_gl_texture_format(struct glcontext *gl,
                                       int data_format,
                                       GLint *formatp,
