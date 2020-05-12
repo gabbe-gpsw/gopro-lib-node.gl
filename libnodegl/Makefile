@@ -122,6 +122,7 @@ LIB_OBJS = animation.o              \
            params.o                 \
            pass.o                   \
            pgcache.o                \
+           pgcraft.o                \
            pipeline.o               \
            program.o                \
            rendertarget.o           \
