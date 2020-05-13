@@ -312,6 +312,7 @@ struct program_priv {
     const char *fragment;
     const char *compute;
     struct hmap *properties;
+    struct hmap *vert2frag_vars;
     int nb_frag_output;
 
     struct program program;
@@ -368,6 +369,10 @@ struct transform_priv {
 
 struct identity_priv {
     NGLI_ALIGNED_MAT(modelview_matrix);
+};
+
+struct iovariable_priv {
+    int type;
 };
 
 struct resourceprops_priv {

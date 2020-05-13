@@ -61,6 +61,7 @@ struct pgcraft_named_texture {
 
 struct pgcraft_named_block {
     char name[MAX_ID_LEN];
+    const char *instance_name;
     int stage;
     int variadic;
     const struct block *block;
@@ -76,6 +77,11 @@ struct pgcraft_named_attribute {
     int offset;
     int rate;
     struct buffer *buffer;
+};
+
+struct pgcraft_named_iovar {
+    char name[MAX_ID_LEN];
+    int type;
 };
 
 enum {
@@ -124,14 +130,22 @@ struct pgcraft_params {
     const struct pgcraft_named_attribute *attributes;
     int nb_attributes;
 
+    const struct pgcraft_named_iovar *vert2frag_vars;
+    int nb_vert2frag_vars;
+
     int nb_frag_output;
 };
 
 struct pgcraft {
     struct darray texture_infos; // pgcraft_texture_info
 
+    /* uniforms block */
+    int use_ublock;
+    struct block ublock[NGLI_PROGRAM_SHADER_NB];
+    struct buffer ubuffer[NGLI_PROGRAM_SHADER_NB];
+
     /* private */
-    struct  ngl_ctx *ctx;
+    struct ngl_ctx *ctx;
     struct bstr *shaders[NGLI_PROGRAM_SHADER_NB];
 
     struct darray pipeline_uniforms;
@@ -144,10 +158,13 @@ struct pgcraft {
     struct darray filtered_pipeline_buffers;
     struct darray filtered_pipeline_attributes;
 
+    struct darray vert2frag_vars; // pgcraft_named_iovar
+
     struct program program;
 
-    //int next_ubo_bind[NGLI_PROGRAM_SHADER_NB];
-    int next_ssbo_bind[NGLI_PROGRAM_SHADER_NB];
+    int bindings[NGLI_PROGRAM_SHADER_NB];
+    int in_locations[NGLI_PROGRAM_SHADER_NB];
+    int out_locations[NGLI_PROGRAM_SHADER_NB];
 
     /* GLSL info */
     int glsl_version;
@@ -157,6 +174,12 @@ struct pgcraft {
     int has_precision_qualifiers;
     int has_modern_texture_picking;
     int has_buffer_bindings;
+    int has_uniforms;
+    int *next_ssbo_bind;
+    int *next_ubo_bind;
+    int *next_tex_bind;
+    int *next_in_location;  // 1st stage only
+    int *next_out_location; // last stage only
 };
 
 int ngli_pgcraft_init(struct pgcraft *s, struct ngl_ctx *ctx);
@@ -164,6 +187,8 @@ int ngli_pgcraft_init(struct pgcraft *s, struct ngl_ctx *ctx);
 int ngli_pgcraft_craft(struct pgcraft *s,
                        struct pipeline_params *dst,
                        const struct pgcraft_params *params);
+
+int ngli_pgcraft_get_uniform_index(const struct pgcraft *s, const char *name, int stage);
 
 void ngli_pgcraft_reset(struct pgcraft *s);
 

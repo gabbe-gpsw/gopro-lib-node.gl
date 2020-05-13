@@ -26,7 +26,6 @@
 #include "memory.h"
 #include "nodes.h"
 #include "program.h"
-#include "program_reflection.h"
 
 int ngli_program_init(struct program *s, struct ngl_ctx *ctx, const char *vertex, const char *fragment, const char *compute)
 {
@@ -43,19 +42,6 @@ int ngli_program_init(struct program *s, struct ngl_ctx *ctx, const char *vertex
 
     s->ctx = ctx;
 
-    struct program_reflection r = {0};
-    int ret = ngli_program_reflection_init(&r, vertex, fragment, compute);
-    if (ret < 0)
-        return ret;
-    ngli_program_reflection_dump(&r);
-    s->uniforms = r.uniforms;
-    r.uniforms = NULL;
-    s->attributes = r.inputs;
-    r.inputs = NULL;
-    s->buffer_blocks = r.blocks;
-    r.blocks = NULL;
-    ngli_program_reflection_reset(&r);
-
     for (int i = 0; i < NGLI_ARRAY_NB(s->shaders); i++) {
         if (!shaders[i].src)
             continue;
@@ -65,8 +51,11 @@ int ngli_program_init(struct program *s, struct ngl_ctx *ctx, const char *vertex
                                                   shaders[i].src, strlen(shaders[i].src),
                                                   shaders[i].kind,
                                                   "whatever", "main", vk->spirv_compiler_opts);
-        if (shaderc_result_get_compilation_status(shader->result) != shaderc_compilation_status_success)
-            return -1;
+        LOG(ERROR, "%s", shaders[i].src);
+        if (shaderc_result_get_compilation_status(shader->result) != shaderc_compilation_status_success) {
+            LOG(ERROR, "unable to compile shader: %s", shaderc_result_get_error_message(shader->result));
+            return NGL_ERROR_EXTERNAL;
+        }
 
         const uint32_t *code = (const uint32_t *)shaderc_result_get_bytes(shader->result);
         const size_t code_size = shaderc_result_get_length(shader->result);
@@ -76,8 +65,10 @@ int ngli_program_init(struct program *s, struct ngl_ctx *ctx, const char *vertex
             .pCode = code,
         };
         VkResult ret = vkCreateShaderModule(vk->device, &shader_module_create_info, NULL, &shader->vkmodule);
-        if (ret != VK_SUCCESS)
-            return -1;
+        if (ret != VK_SUCCESS) {
+            LOG(ERROR, "unable to create shader module");
+            return NGL_ERROR_EXTERNAL;
+        }
     }
 
     return 0;

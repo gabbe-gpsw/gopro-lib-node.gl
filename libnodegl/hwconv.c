@@ -39,7 +39,6 @@
 #include "utils.h"
 
 static const char *vert_base =
-    "ngl_out vec2 var_tex_coord;"                                           "\n"
     "void main()"                                                           "\n"
     "{"                                                                     "\n"
     "    ngl_out_pos = vec4(position.xy, 0.0, 1.0);"                        "\n"
@@ -47,11 +46,14 @@ static const char *vert_base =
     "}";
 
 static const char *frag_base =
-    "ngl_in vec2 var_tex_coord;"                                            "\n"
     "void main()"                                                           "\n"
     "{"                                                                     "\n"
     "    ngl_out_color = ngli_texvideo(tex, var_tex_coord);"                "\n"
     "}";
+
+static const pgcraft_named_iovar vert2frag_vars[] = {
+    {.name = "var_tex_coord", .type = NGLI_TYPE_VEC2},
+};
 
 int ngli_hwconv_init(struct hwconv *hwconv, struct ngl_ctx *ctx,
                      const struct image *dst_image,
@@ -140,6 +142,8 @@ int ngli_hwconv_init(struct hwconv *hwconv, struct ngl_ctx *ctx,
         .nb_textures = NGLI_ARRAY_NB(textures),
         .attributes = attributes,
         .nb_attributes = NGLI_ARRAY_NB(attributes),
+        .vert2frag_vars = vert2frag_vars,
+        .nb_vert2frag_vars = NGLI_ARRAY_NB(vert2frag_vars),
     };
 
     ret = ngli_pgcraft_init(&hwconv->crafter, ctx);

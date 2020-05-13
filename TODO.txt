@@ -22,7 +22,6 @@ Vulkan:
 * Support RTT (WIP)
 * Dynamic viewport/scissor pipeline (WIP in RTT)
 * Explore Subcommand / Subpasses
-* Improve spirv parsing (WIP)
 * Destroy ressources when they are not used anymore (backend->wait_idle() ?)
 
 Abstraction (struct):

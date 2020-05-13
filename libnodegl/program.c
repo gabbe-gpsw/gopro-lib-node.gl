@@ -28,7 +28,6 @@
 #include "memory.h"
 #include "nodes.h"
 #include "program.h"
-#include "program_reflection.h"
 #include "type.h"
 
 #include "utils.h"
@@ -259,11 +258,6 @@ int ngli_program_init(struct program *s, struct ngl_ctx *ctx, const char *vertex
         LOG(ERROR, "context does not support compute shaders");
         return NGL_ERROR_UNSUPPORTED;
     }
-
-    struct program_reflection r = {0};
-    ret = ngli_program_reflection_init(&r, vertex, fragment, compute);
-    if (ret == 0)
-        ngli_program_reflection_dump(&r);
 
     s->ctx = ctx;
     s->id = ngli_glCreateProgram(gl);
