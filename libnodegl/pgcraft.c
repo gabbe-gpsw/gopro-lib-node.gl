@@ -41,11 +41,26 @@ static const char *get_precision_qualifier(const struct pgcraft *s, int precisio
     return s->has_precision_qualifiers ? precision_qualifiers[precision] : "";
 }
 
+static int inject_block_uniform(struct pgcraft *s, struct bstr *b, int stage,
+                                const struct pgcraft_named_uniform *uniform)
+{
+    struct block *block = &s->ublock[stage];
+
+    /* Lazily initialize the block containing the uniforms */
+    if (!block->size)
+        ngli_block_init(block, NGLI_BLOCK_LAYOUT_STD140);
+
+    return ngli_block_add_field(block, uniform->name, uniform->type, uniform->count);
+}
+
 static int inject_uniform(struct pgcraft *s, struct bstr *b, int stage,
                           const struct pgcraft_named_uniform *uniform)
 {
     if (uniform->stage != stage)
         return 0;
+
+    if (s->use_ublock)
+        return inject_block_uniform(s, b, stage, uniform);
 
     struct pipeline_uniform pl_uniform = {
         .type  = uniform->type,
@@ -183,6 +198,7 @@ static int inject_texture_info(struct pgcraft *s, int stage, struct pgcraft_text
                 .type     = field->type,
                 .location = -1,
                 .binding  = -1,
+                .stage    = stage,
                 .texture  = info->texture,
             };
             snprintf(pl_texture.name, sizeof(pl_texture.name), "%s", field->name);
@@ -258,6 +274,7 @@ static int inject_block(struct pgcraft *s, struct bstr *b, int stage,
     struct pipeline_buffer pl_buffer = {
         .type    = block->type,
         .binding = -1,
+        .stage   = stage,
         .buffer  = named_block->buffer,
     };
     snprintf(pl_buffer.name, sizeof(pl_buffer.name), "%s_block", named_block->name);
@@ -271,6 +288,7 @@ static int inject_block(struct pgcraft *s, struct bstr *b, int stage,
     } else {
         ngli_bstr_printf(b, "layout(%s)", layout);
     }
+
     const char *keyword = ngli_type_get_glsl_type(block->type);
     ngli_bstr_printf(b, " %s %s_block {\n", keyword, named_block->name);
     const struct block_field *field_info = ngli_darray_data(&block->fields);
@@ -284,7 +302,8 @@ static int inject_block(struct pgcraft *s, struct bstr *b, int stage,
         else
             ngli_bstr_printf(b, "    %s %s;\n", type, fi->name);
     }
-    ngli_bstr_printf(b, "} %s;\n", named_block->name);
+    const char *instance_name = named_block->instance_name ? named_block->instance_name : named_block->name;
+    ngli_bstr_printf(b, "} %s;\n", instance_name);
 
     if (!ngli_darray_push(&s->pipeline_buffers, &pl_buffer))
         return NGL_ERROR_MEMORY;
@@ -302,20 +321,30 @@ static int inject_attribute(struct pgcraft *s, struct bstr *b, int stage,
     if (!precision)
         precision = "highp";
 
+    int base_location = -1;
+    const int attribute_count = attribute->type == NGLI_TYPE_MAT4 ? 4 : 1;
+    if (s->next_in_location) {
+        base_location = s->next_in_location[stage];
+        s->next_in_location[stage] += attribute_count;
+        ngli_bstr_printf(b, "layout(location=%d) ", base_location);
+    }
+
     /*
      * If an attribute is declared but has no data, we still need to inject a
      * dummy one in the shader (without registering a pipeline entry) so that
      * the shader compilation works.
      */
-    ngli_bstr_printf(b, "ngl_in %s %s %s;\n", precision, type, attribute->name);
+    const char *qualifier = s->has_in_out_qualifiers ? "in" : "varying";
+    ngli_bstr_printf(b, "%s %s %s %s;\n", qualifier, precision, type, attribute->name);
     if (!attribute->buffer)
         return 0;
 
-    const int attribute_count = attribute->type == NGLI_TYPE_MAT4 ? 4 : 1;
     const int attribute_offset = ngli_format_get_bytes_per_pixel(attribute->format);
     for (int i = 0; i < attribute_count; i++) {
+        /* negative location offset trick is for probe_pipeline_attribute() */
+        const int loc = base_location != -1 ? base_location + i : -1 - i;
         struct pipeline_attribute pl_attribute = {
-            .location = -1 - i, // location offset trick for probe_pipeline_attribute()
+            .location = loc,
             .format   = attribute->format,
             .stride   = attribute->stride,
             .offset   = attribute->offset + i * attribute_offset,
@@ -346,6 +375,41 @@ static int inject_##e##s(struct pgcraft *s, struct bstr *b, int stage,      \
 DEFINE_INJECT_FUNC(uniform)
 DEFINE_INJECT_FUNC(block)
 DEFINE_INJECT_FUNC(attribute)
+
+const char *ublock_names[] = {
+    [NGLI_PROGRAM_SHADER_VERT] = "vert",
+    [NGLI_PROGRAM_SHADER_FRAG] = "frag",
+    [NGLI_PROGRAM_SHADER_COMP] = "comp",
+};
+
+static int inject_ublock(struct pgcraft *s, struct bstr *b, int stage)
+{
+    if (!s->use_ublock)
+        return 0;
+
+    struct block *block = &s->ublock[stage];
+    if (!block->size)
+        return 0;
+
+    // FIXME: need to fallback on storage buffer if needed, similarly to pass
+    block->type = NGLI_TYPE_UNIFORM_BUFFER;
+
+    struct buffer *ubuffer = &s->ubuffer[stage];
+    int ret = ngli_buffer_init(ubuffer, s->ctx, block->size, NGLI_BUFFER_USAGE_DYNAMIC);
+    if (ret < 0)
+        return ret;
+
+    struct pgcraft_named_block named_block = {
+        /* instance name is empty to make field accesses identical to uniform accesses */
+        .instance_name = "",
+        .stage         = stage,
+        .block         = block,
+        .buffer        = ubuffer,
+    };
+    snprintf(named_block.name, sizeof(named_block.name), "ngl_%s", ublock_names[stage]);
+
+    return inject_block(s, b, stage, &named_block);
+}
 
 static void set_glsl_header(struct pgcraft *s, struct bstr *b)
 {
@@ -584,20 +648,38 @@ static int samplers_preproc(struct pgcraft *s, struct bstr *b)
     return ret;
 }
 
+static int inject_vert2frags(struct pgcraft *s, struct bstr *b, int stage)
+{
+    static const char *qualifiers[2][2] = {
+        [NGLI_PROGRAM_SHADER_VERT] = {"varying", "out"},
+        [NGLI_PROGRAM_SHADER_FRAG] = {"varying", "in"},
+    };
+    const char *qualifier = qualifiers[stage][s->has_in_out_qualifiers];
+    const struct pgcraft_named_iovar *iovars = ngli_darray_data(&s->vert2frag_vars);
+    for (int i = 0; i < ngli_darray_count(&s->vert2frag_vars); i++) {
+        if (s->has_in_out_qualifiers) // Note: sometimes we can have in/out without layout location
+            ngli_bstr_printf(b, "layout(location=%d) ", i);
+        const struct pgcraft_named_iovar *iovar = &iovars[i];
+        const char *type = ngli_type_get_glsl_type(iovar->type);
+        ngli_bstr_printf(b, "%s %s %s;\n", qualifier, type, iovar->name);
+    }
+    return 0;
+}
+
 static int craft_vert(struct pgcraft *s, const struct pgcraft_params *params)
 {
     struct bstr *b = s->shaders[NGLI_PROGRAM_SHADER_VERT];
 
     set_glsl_header(s, b);
 
-    ngli_bstr_printf(b, "#define ngl_in  %s\n", s->has_in_out_qualifiers ? "in" : "attribute");
-    ngli_bstr_printf(b, "#define ngl_out %s\n", s->has_in_out_qualifiers ? "out" : "varying");
     ngli_bstr_print(b, "#define ngl_out_pos gl_Position\n");
 
+    inject_vert2frags(s, b, NGLI_PROGRAM_SHADER_VERT);
     inject_uniforms(s, b, NGLI_PROGRAM_SHADER_VERT, params);
     inject_texture_infos(s, NGLI_PROGRAM_SHADER_VERT, params);
     inject_blocks(s, b, NGLI_PROGRAM_SHADER_VERT, params);
     inject_attributes(s, b,  NGLI_PROGRAM_SHADER_VERT, params);
+    inject_ublock(s, b, NGLI_PROGRAM_SHADER_VERT);
 
     ngli_bstr_print(b, params->vert_base);
     return samplers_preproc(s, b);
@@ -618,20 +700,23 @@ static int craft_frag(struct pgcraft *s, const struct pgcraft_params *params)
                            "#endif\n");
 
     if (s->has_in_out_qualifiers) {
-        ngli_bstr_print(b, "#define ngl_in in\n"
-                           "#define ngl_out out\n");
+        if (s->next_out_location) {
+            const int out_location = s->next_out_location[NGLI_PROGRAM_SHADER_FRAG]++;
+            ngli_bstr_printf(b, "layout(location=%d) ", out_location);
+        }
         if (params->nb_frag_output)
-            ngli_bstr_printf(b, "ngl_out vec4 ngl_out_color[%d];\n", params->nb_frag_output);
+            ngli_bstr_printf(b, "out vec4 ngl_out_color[%d];\n", params->nb_frag_output);
         else
-            ngli_bstr_print(b, "ngl_out vec4 ngl_out_color;\n");
+            ngli_bstr_print(b, "out vec4 ngl_out_color;\n");
     } else {
-        ngli_bstr_print(b, "#define ngl_in varying\n"
-                           "#define ngl_out_color gl_FragColor\n");
+        ngli_bstr_print(b, "#define ngl_out_color gl_FragColor\n");
     }
 
+    inject_vert2frags(s, b, NGLI_PROGRAM_SHADER_FRAG);
     inject_uniforms(s, b, NGLI_PROGRAM_SHADER_FRAG, params);
     inject_texture_infos(s, NGLI_PROGRAM_SHADER_FRAG, params);
     inject_blocks(s, b, NGLI_PROGRAM_SHADER_FRAG, params);
+    inject_ublock(s, b, NGLI_PROGRAM_SHADER_FRAG);
 
     ngli_bstr_print(b, params->frag_base);
     return samplers_preproc(s, b);
@@ -646,6 +731,7 @@ static int craft_comp(struct pgcraft *s, const struct pgcraft_params *params)
     inject_uniforms(s, b, NGLI_PROGRAM_SHADER_COMP, params);
     inject_texture_infos(s, NGLI_PROGRAM_SHADER_COMP, params);
     inject_blocks(s, b, NGLI_PROGRAM_SHADER_COMP, params);
+    inject_ublock(s, b, NGLI_PROGRAM_SHADER_COMP);
     ngli_bstr_print(b, params->comp_base);
     return samplers_preproc(s, b);
 }
@@ -709,7 +795,7 @@ static int filter_pipeline_elems(struct pgcraft *s, probe_func_type probe_func,
     uint8_t *elems = ngli_darray_data(src);
     for (int i = 0; i < ngli_darray_count(src); i++) {
         void *elem = elems + i * src->element_size;
-        if (probe_func(info_map, elem) < 0)
+        if (info_map && probe_func(info_map, elem) < 0)
             continue;
         if (!ngli_darray_push(dst, elem))
             return NGL_ERROR_MEMORY;
@@ -737,6 +823,16 @@ static int get_texture_index(const struct pgcraft *s, const char *name)
         if (!strcmp(pipeline_texture->name, name))
             return i;
     }
+    return -1;
+}
+
+static int get_ublock_index(const struct pgcraft *s, const char *name, int stage)
+{
+    const struct darray *fields_array = &s->ublock[stage].fields;
+    const struct block_field *fields = ngli_darray_data(fields_array);
+    for (int i = 0; i < ngli_darray_count(fields_array); i++)
+        if (!strcmp(fields[i].name, name))
+            return stage << 16 | i;
     return -1;
 }
 
@@ -795,6 +891,35 @@ static int alloc_shader(struct pgcraft *s, int stage)
     return 0;
 }
 
+#ifdef VULKAN_BACKEND
+static void setup_glsl_info(struct pgcraft *s, const struct vkcontext *vk)
+{
+    s->rg = "rg";
+    s->glsl_version = 450;
+    s->glsl_version_suffix = "";
+
+    // XXX
+    s->has_in_out_qualifiers = 1;
+    s->has_precision_qualifiers = 0;
+    s->has_modern_texture_picking = 1;
+    s->has_buffer_bindings = 1;
+
+    s->use_ublock = 1;
+    s->has_shared_bindings = 1;
+
+    if (s->has_buffer_bindings) {
+        if (s->has_shared_bindings)
+            for (int i = 0; i < NB_BINDINGS; i++)
+                s->next_bindings[i] = &s->bindings[0];
+        else
+            for (int i = 0; i < NB_BINDINGS; i++)
+                s->next_bindings[i] = &s->bindings[i];
+    }
+
+    s->next_in_location = s->in_locations;
+    s->next_out_location = s->out_locations;
+}
+#else
 #define IS_GL_ES_MIN(min)   (gl->backend == NGL_BACKEND_OPENGLES && gl->version >= (min))
 #define IS_GL_MIN(min)      (gl->backend == NGL_BACKEND_OPENGL   && gl->version >= (min))
 #define IS_GLSL_ES_MIN(min) (gl->backend == NGL_BACKEND_OPENGLES && s->glsl_version >= (min))
@@ -849,13 +974,27 @@ static void setup_glsl_info(struct pgcraft *s, const struct glcontext *gl)
     s->next_bindings[BIND_ID(NGLI_PROGRAM_SHADER_VERT, BINDING_TYPE_TEXTURE)] = NULL;
     s->next_bindings[BIND_ID(NGLI_PROGRAM_SHADER_FRAG, BINDING_TYPE_TEXTURE)] = NULL;
     s->next_bindings[BIND_ID(NGLI_PROGRAM_SHADER_COMP, BINDING_TYPE_TEXTURE)] = NULL;
+
+    s->use_ublock = 0;
+
+    // XXX: should we add in/out location for gl when available?
+    s->next_in_location = NULL;
+    s->next_out_location = NULL;
 }
+#endif
 
 int ngli_pgcraft_init(struct pgcraft *s, struct ngl_ctx *ctx)
 {
     memset(s, 0, sizeof(*s));
 
+#ifdef VULKAN_BACKEND
+    setup_glsl_info(s, ctx->vkcontext);
+#else
     setup_glsl_info(s, ctx->glcontext);
+#endif
+
+    if (s->use_ublock)
+        ngli_block_init(s->ublock, NGLI_BLOCK_LAYOUT_STD140);
 
     s->ctx = ctx;
 
@@ -893,6 +1032,13 @@ static int get_program_graphics(struct pgcraft *s, const struct pgcraft_params *
 {
     int ret;
 
+    ngli_darray_init(&s->vert2frag_vars, sizeof(struct pgcraft_named_iovar), 0);
+    for (int i = 0; i < params->nb_vert2frag_vars; i++) {
+        struct pgcraft_named_iovar *iovar = ngli_darray_push(&s->vert2frag_vars, &params->vert2frag_vars[i]);
+        if (!iovar)
+            return NGL_ERROR_MEMORY;
+    }
+
     if ((ret = alloc_shader(s, NGLI_PROGRAM_SHADER_VERT)) < 0 ||
         (ret = alloc_shader(s, NGLI_PROGRAM_SHADER_FRAG)) < 0 ||
         (ret = prepare_texture_infos(s, params, 1)) < 0 ||
@@ -921,6 +1067,20 @@ int ngli_pgcraft_craft(struct pgcraft *s,
     if (ret < 0)
         return ret;
 
+    if (s->use_ublock) {
+        ngli_assert(dst_params->nb_uniforms == 0);
+        for (int i = 0; i < NGLI_ARRAY_NB(s->ublock); i++) {
+            struct block *block = &s->ublock[i];
+            if (block->size) {
+                struct buffer *buffer = &s->ubuffer[i];
+                dst_params->ublock[i]  = block;
+                dst_params->ubuffer[i] = buffer;
+            }
+        }
+    } else {
+        memset(dst_params->ublock, 0, sizeof(dst_params->ublock));
+    }
+
     dst_params->program       = &s->program;
     dst_params->uniforms      = ngli_darray_data(&s->filtered_pipeline_uniforms);
     dst_params->nb_uniforms   = ngli_darray_count(&s->filtered_pipeline_uniforms);
@@ -934,12 +1094,25 @@ int ngli_pgcraft_craft(struct pgcraft *s,
     return 0;
 }
 
+int ngli_pgcraft_get_uniform_index(const struct pgcraft *s, const char *name, int stage)
+{
+    return s->use_ublock ? get_ublock_index(s, name, stage) : get_uniform_index(s, name);
+}
+
 void ngli_pgcraft_reset(struct pgcraft *s)
 {
     if (!s->ctx)
         return;
 
     ngli_darray_reset(&s->texture_infos);
+    ngli_darray_reset(&s->vert2frag_vars);
+
+    if (s->use_ublock) {
+        for (int i = 0; i < NGLI_ARRAY_NB(s->ublock); i++) {
+            ngli_block_reset(&s->ublock[i]);
+            ngli_buffer_reset(&s->ubuffer[i]);
+        }
+    }
 
     for (int i = 0; i < NGLI_ARRAY_NB(s->shaders); i++)
         ngli_bstr_freep(&s->shaders[i]);

@@ -158,8 +158,6 @@ class SceneCfg:
                     raise Exception('Unable to create a media file using ffmpeg (ret=%d)' % ret)
             self.medias = [Media(media_file)]
 
-        self._get_shader = self._get_vk_shader if self.backend == 'vk' else self._get_gl_shader
-
     @property
     def aspect_ratio_float(self):
         return self.aspect_ratio[0] / float(self.aspect_ratio[1])
@@ -170,13 +168,7 @@ class SceneCfg:
             odict[field] = getattr(self, field)
         return odict
 
-    def _get_vk_shader(self, name, stype, shader_path):
-        filename = '%s.%s' % (name, stype)
-        if shader_path is None:
-            shader_path = op.join(op.dirname(__file__), 'examples', 'shaders', 'vk')
-        return open(op.join(shader_path, filename)).read()
-
-    def _get_gl_shader(self, name, stype, shader_path):
+    def _get_shader(self, name, stype, shader_path):
         filename = '%s.%s' % (name, stype)
         if shader_path is None:
             shader_path = op.join(op.dirname(__file__), 'examples', 'shaders')

@@ -77,7 +77,6 @@ def _get_cube():
 
 
 _RENDER_CUBE_VERT = '''
-ngl_out vec3 var_normal;
 void main()
 {
     ngl_out_pos = ngl_projection_matrix * ngl_modelview_matrix * ngl_position;
@@ -87,8 +86,6 @@ void main()
 
 
 _RENDER_CUBE_FRAG = '''
-ngl_in vec3 var_normal;
-
 void main()
 {
     ngl_out_color = vec4((var_normal + 1.0) / 2.0, 1.0);
@@ -101,6 +98,7 @@ def _get_rtt_scene(cfg, features='depth', texture_ds_format=None, samples=0, mip
     cfg.aspect_ratio = (1, 1)
     cube = _get_cube()
     program = ngl.Program(vertex=_RENDER_CUBE_VERT, fragment=_RENDER_CUBE_FRAG)
+    program.update_vert2frag_vars(var_normal=ngl.IOVariable('vec3'))
     render = ngl.Render(cube, program)
     render = ngl.Scale(render, (0.5, 0.5, 0.5))
 

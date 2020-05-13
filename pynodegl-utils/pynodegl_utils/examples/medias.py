@@ -17,6 +17,8 @@ def centered_media(cfg, uv_corner=(0, 0), uv_width=(1, 0), uv_height=(0, 1), pro
 
     t = ngl.Texture2D(data_src=m)
     p = ngl.Program(vertex=cfg.get_vert('texture'), fragment=cfg.get_frag('texture'))
+    p.update_vert2frag_vars(var_tex0_coord=ngl.IOVariable('vec2'),
+                            var_uvcoord=ngl.IOVariable('vec2'))
     render = ngl.Render(q, p)
     render.update_fragment_resources(tex0=t)
 

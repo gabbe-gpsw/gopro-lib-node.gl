@@ -227,8 +227,6 @@ for layout in {'std140', 'std430', 'uniform'}:
 
 
 _RENDER_STREAMEDBUFFER_VERT = '''
-ngl_out vec2 var_uvcoord;
-
 void main()
 {
     ngl_out_pos = ngl_projection_matrix * ngl_modelview_matrix * ngl_position;
@@ -238,8 +236,6 @@ void main()
 
 
 _RENDER_STREAMEDBUFFER_FRAG = '''
-ngl_in vec2 var_uvcoord;
-
 void main()
 {
     uint x = uint(var_uvcoord.x * %(size)d.0);
@@ -297,6 +293,7 @@ def _get_data_streamed_buffer_vec4_scene(cfg, scale, show_dbg_points):
         vertex=_RENDER_STREAMEDBUFFER_VERT,
         fragment=_RENDER_STREAMEDBUFFER_FRAG % shader_params,
     )
+    program.update_vert2frag_vars(var_uvcoord=ngl.IOVariable('vec2'))
     render = ngl.Render(quad, program)
     render.update_fragment_resources(streamed=streamed_block)
 

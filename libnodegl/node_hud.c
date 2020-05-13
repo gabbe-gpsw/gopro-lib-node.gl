@@ -1217,7 +1217,6 @@ static void widgets_uninit(struct ngl_node *node)
 }
 
 static const char * const vertex_data =
-    "ngl_out vec2 var_tex_coord;"                                           "\n"
     "void main()"                                                           "\n"
     "{"                                                                     "\n"
     "    ngl_out_pos = projection_matrix"                                   "\n"
@@ -1225,15 +1224,16 @@ static const char * const vertex_data =
     "                * vec4(coords.xy, 0.0, 1.0);"                          "\n"
     "    var_tex_coord = coords.zw;"                                        "\n"
     "}";
-#endif
 
 static const char * const fragment_data =
-    "ngl_in vec2 var_tex_coord;"                                            "\n"
     "void main()"                                                           "\n"
     "{"                                                                     "\n"
     "    ngl_out_color = ngl_tex2d(tex, var_tex_coord);"                    "\n"
     "}";
-#endif
+
+static const struct pgcraft_named_iovar vert2frag_vars[] = {
+    {.name = "var_tex_coord", .type = NGLI_TYPE_VEC2},
+};
 
 static int hud_init(struct ngl_node *node)
 {
@@ -1333,6 +1333,8 @@ static int hud_init(struct ngl_node *node)
         .nb_textures = NGLI_ARRAY_NB(textures),
         .attributes = attributes,
         .nb_attributes = NGLI_ARRAY_NB(attributes),
+        .vert2frag_vars = vert2frag_vars,
+        .nb_vert2frag_vars = NGLI_ARRAY_NB(vert2frag_vars),
     };
 
     ret = ngli_pgcraft_init(&s->crafter, ctx);
@@ -1347,8 +1349,8 @@ static int hud_init(struct ngl_node *node)
     if (ret < 0)
         return ret;
 
-    s->modelview_matrix_index = ngli_pipeline_get_uniform_index(&s->pipeline, "modelview_matrix");
-    s->projection_matrix_index = ngli_pipeline_get_uniform_index(&s->pipeline, "projection_matrix");
+    s->modelview_matrix_index = ngli_pgcraft_get_uniform_index(&s->crafter, "modelview_matrix", NGLI_PROGRAM_SHADER_VERT);
+    s->projection_matrix_index = ngli_pgcraft_get_uniform_index(&s->crafter, "projection_matrix", NGLI_PROGRAM_SHADER_VERT);
 
     return 0;
 }

@@ -1,5 +1,3 @@
-ngl_out vec2 var_tex0_coord;
-
 void main()
 {
     vec4 position = ngl_position + vec4(mix(translate_a, translate_b, time), 0.0, 0.0);

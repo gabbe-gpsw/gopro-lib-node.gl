@@ -150,8 +150,6 @@ void main()
 
 
 _RENDER_HISTOGRAM_VERT = '''
-ngl_out vec2 var_uvcoord;
-
 void main()
 {
     ngl_out_pos = ngl_projection_matrix * ngl_modelview_matrix * ngl_position;
@@ -161,8 +159,6 @@ void main()
 
 
 _RENDER_HISTOGRAM_FRAG = '''
-ngl_in vec2 var_uvcoord;
-
 void main()
 {
     uint x = uint(var_uvcoord.x * %(size)d.0);
@@ -243,6 +239,7 @@ def compute_histogram(cfg, show_dbg_points=False):
         vertex=_RENDER_HISTOGRAM_VERT,
         fragment=_RENDER_HISTOGRAM_FRAG % shader_params,
     )
+    program.update_vert2frag_vars(var_uvcoord=ngl.IOVariable('vec2'))
     render = ngl.Render(quad, program, label='render_histogram')
     render.update_fragment_resources(hist=histogram_block)
 

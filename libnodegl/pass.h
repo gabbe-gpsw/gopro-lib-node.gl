@@ -24,6 +24,7 @@
 
 #include <stdint.h>
 #include "darray.h"
+#include "pgcraft.h"
 #include "pipeline.h"
 
 struct ngl_ctx;
@@ -41,6 +42,8 @@ struct pass_params {
     int nb_instances;
     struct hmap *attributes;
     struct hmap *instance_attributes;
+    struct pgcraft_named_iovar *vert2frag_vars;
+    int nb_vert2frag_vars;
     int nb_frag_output;
 
     /* compute */
@@ -71,7 +74,6 @@ struct pass {
     int pipeline_type;
     struct pipeline_graphics pipeline_graphics;
     struct pipeline_compute pipeline_compute;
-    struct program program;
     struct darray crafter_attributes;
     struct darray crafter_uniforms;
     struct darray crafter_textures;

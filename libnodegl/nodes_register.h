@@ -79,6 +79,7 @@
     action(NGL_NODE_GROUP,                  ngli_group_class)                   \
     action(NGL_NODE_HUD,                    ngli_hud_class)                     \
     action(NGL_NODE_IDENTITY,               ngli_identity_class)                \
+    action(NGL_NODE_IOVARIABLE,             ngli_iovariable_class)              \
     action(NGL_NODE_MEDIA,                  ngli_media_class)                   \
     action(NGL_NODE_PROGRAM,                ngli_program_class)                 \
     action(NGL_NODE_QUAD,                   ngli_quad_class)                    \

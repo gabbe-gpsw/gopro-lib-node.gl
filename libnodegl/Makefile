@@ -91,6 +91,7 @@ LIB_OBJS = animation.o              \
            node_group.o             \
            node_hud.o               \
            node_identity.o          \
+           node_iovariable.o        \
            node_media.o             \
            node_program.o           \
            node_quad.o              \
@@ -116,10 +117,8 @@ LIB_OBJS = animation.o              \
            pass.o                   \
            pgcache.o                \
            pgcraft.o                \
-           program_reflection.o     \
            rnode.o                  \
            serialize.o              \
-           spirv.o                  \
            transforms.o             \
            type.o                   \
            utils.o                  \
@@ -181,7 +180,7 @@ LIB_EXTRA_CFLAGS_Darwin    = -I$(MVK_ROOT)/include/
 LIB_EXTRA_CFLAGS_iPhone    = -I$(MVK_ROOT)/include/
 endif
 
-LIB_LDLIBS                 = -lm -lpthread -lglslang -lstdc++
+LIB_LDLIBS                 = -lm -lpthread
 ifeq ($(BACKEND),vk)
 LIB_LDLIBS                += -lshaderc_shared
 endif
@@ -355,7 +354,6 @@ TESTS = asm             \
         darray          \
         draw            \
         hmap            \
-        spirv           \
         utils           \
 
 TESTPROGS = $(addprefix test_,$(TESTS))
@@ -371,7 +369,6 @@ test_colorconv: test_colorconv.o colorconv.o log.o
 test_darray: test_darray.o darray.o memory.o
 test_draw: test_draw.o drawutils.o
 test_hmap: test_hmap.o utils.o memory.o
-test_spirv: test_spirv.o spirv.o hmap.o utils.o darray.o memory.o
 test_utils: test_utils.o utils.o memory.o
 
 run_test_draw: test_draw
