@@ -20,6 +20,7 @@
  */
 
 #include <string.h>
+#include <stddef.h>
 
 #include "format.h"
 #include "hmap.h"
