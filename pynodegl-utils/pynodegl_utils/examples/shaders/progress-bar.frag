@@ -1,6 +1,3 @@
-ngl_in vec2 var_tex0_coord;
-ngl_in vec2 var_uvcoord;
-
 void main()
 {
     float pad    = 2.0 / 100.;

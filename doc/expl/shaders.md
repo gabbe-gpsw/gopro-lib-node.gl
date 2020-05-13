@@ -15,9 +15,9 @@ Fragment and vertex shader parameters
 
 Qualifier | Type   | Name                       | Description
 ----------|--------|----------------------------|------------
-ngl_in    | `vec4` | `ngl_position`             | geometry vertex attribute
-ngl_in    | `vec2` | `ngl_uvcoord`              | geometry uv coordinate attribute
-ngl_in    | `vec3` | `ngl_normal`               | geometry normal attribute
+in        | `vec4` | `ngl_position`             | geometry vertex attribute
+in        | `vec2` | `ngl_uvcoord`              | geometry uv coordinate attribute
+in        | `vec3` | `ngl_normal`               | geometry normal attribute
 uniform   | `mat4` | `ngl_modelview_matrix`     | modelview matrix
 uniform   | `mat4` | `ngl_projection_matrix`    | projection matrix
 uniform   | `mat3` | `ngl_normal_matrix`        | normal matrix
@@ -85,8 +85,8 @@ For example, the following scene script:
 Gives the following shader parameter:
 
 ```glsl
-    ngl_in vec3 center;
-    ngl_in vec4 color;
+    in vec3 center;
+    in vec4 color;
 ```
 
 ## Uniform parameters

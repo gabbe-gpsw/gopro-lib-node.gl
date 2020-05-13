@@ -22,6 +22,7 @@
 #ifndef PIPELINE_H
 #define PIPELINE_H
 
+#include "block.h"
 #include "buffer.h"
 #include "darray.h"
 #include "graphicstate.h"
@@ -43,6 +44,7 @@ struct pipeline_texture {
     int type;
     int location;
     int binding;
+    int stage;
     struct texture *texture;
 };
 
@@ -50,6 +52,7 @@ struct pipeline_buffer {
     char name[MAX_ID_LEN];
     int type;
     int binding;
+    int stage;
     struct buffer *buffer;
 };
 
@@ -100,6 +103,13 @@ struct pipeline_params {
     int nb_buffers;
     const struct pipeline_attribute *attributes;
     int nb_attributes;
+
+    /*
+     * Uniform block info per stage; required if the pipeline doesn't support
+     * uniforms.
+     */
+    const struct block *ublock[NGLI_PROGRAM_SHADER_NB];
+    struct buffer *ubuffer[NGLI_PROGRAM_SHADER_NB];
 };
 
 struct pipeline {
@@ -115,6 +125,10 @@ struct pipeline {
     struct darray buffer_descs;
     struct darray attribute_descs;
 
+    const struct block *ublock[NGLI_PROGRAM_SHADER_NB];
+    struct buffer *ubuffer[NGLI_PROGRAM_SHADER_NB];
+    uint8_t *udata[NGLI_PROGRAM_SHADER_NB];
+
     void (*exec)(const struct pipeline *s, struct glcontext *gl);
 
     uint64_t used_texture_units;
@@ -122,8 +136,6 @@ struct pipeline {
 };
 
 int ngli_pipeline_init(struct pipeline *s, struct ngl_ctx *ctx, const struct pipeline_params *params);
-int ngli_pipeline_get_uniform_index(const struct pipeline *s, const char *name);
-int ngli_pipeline_get_texture_index(const struct pipeline *s, const char *name);
 int ngli_pipeline_update_uniform(struct pipeline *s, int index, const void *value);
 int ngli_pipeline_update_texture(struct pipeline *s, int index, struct texture *texture);
 void ngli_pipeline_exec(struct pipeline *s);

@@ -31,25 +31,19 @@ struct sxplayer_info g_info;
 struct ngl_node *g_opacity_uniform;
 
 static const char pgbar_vertex[] = \
-"out vec2 var_uvcoord;"                                                             "\n" \
-"out vec2 var_tex0_coord;"                                                          "\n" \
-                                                                                         \
 "void main()"                                                                       "\n" \
 "{"                                                                                 "\n" \
-"    gl_Position = ngl_projection_matrix * ngl_modelview_matrix * ngl_position;"    "\n" \
-"    var_uvcoord = ngl_uvcoord;"                                                    "\n" \
+"    ngl_out_pos = ngl_projection_matrix * ngl_modelview_matrix * ngl_position;"    "\n" \
 "    var_tex0_coord = (tex0_coord_matrix * vec4(ngl_uvcoord, 0.0, 1.0)).xy;"        "\n" \
 "}";
 
 static const char *pgbar_fragment = \
-"in vec2 var_tex0_coord;"                                               "\n" \
-                                                                        "\n" \
 "void main()"                                                           "\n" \
 "{"                                                                     "\n" \
 "    float height = 2.0 / 100. * ar;"                                   "\n" \
 "    float x = var_tex0_coord.x;"                                       "\n" \
 "    float y = var_tex0_coord.y;"                                       "\n" \
-"    vec4 video_pix = ngl_texvideo(tex0_sampler, var_tex0_coord);"      "\n" \
+"    vec4 video_pix = ngl_texvideo(tex0, var_tex0_coord);"              "\n" \
 "    vec4 color = video_pix;"                                           "\n" \
 "    float time = tex0_ts / media_duration;"                            "\n" \
 "    if (y > 1. - height)"                                              "\n" \
@@ -73,6 +67,10 @@ static struct ngl_node *get_scene(const char *filename)
     struct ngl_node *u_ar             = ngl_node_create(NGL_NODE_UNIFORMFLOAT);
     struct ngl_node *u_opacity        = ngl_node_create(NGL_NODE_UNIFORMFLOAT);
 
+    struct ngl_node *var_tex0_coord = ngl_node_create(NGL_NODE_IOVARIABLE);
+
+    ngl_node_param_set(var_tex0_coord, "type", "vec2");
+
     ngl_node_param_set(quad, "corner", corner);
     ngl_node_param_set(quad, "width", width);
     ngl_node_param_set(quad, "height", height);
@@ -80,6 +78,7 @@ static struct ngl_node *get_scene(const char *filename)
     ngl_node_param_set(texture, "data_src", media);
     ngl_node_param_set(program, "vertex",   pgbar_vertex);
     ngl_node_param_set(program, "fragment", pgbar_fragment);
+    ngl_node_param_set(program, "vert2frag_vars", "var_tex0_coord", var_tex0_coord);
     ngl_node_param_set(u_media_duration, "value", g_info.duration);
     ngl_node_param_set(u_ar,             "value", g_info.width / (double)g_info.height);
     ngl_node_param_set(u_opacity,        "value", 0.0);
@@ -91,6 +90,8 @@ static struct ngl_node *get_scene(const char *filename)
     ngl_node_param_set(render, "uniforms", "opacity",        u_opacity);
 
     g_opacity_uniform = u_opacity;
+
+    ngl_node_unrefp(&var_tex0_coord);
 
     ngl_node_unrefp(&u_media_duration);
     ngl_node_unrefp(&u_ar);

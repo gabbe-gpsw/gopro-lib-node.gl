@@ -27,8 +27,6 @@ from pynodegl_utils.tests.debug import get_debug_points
 
 
 _FIELDS_VERT = '''
-ngl_out vec2 var_uvcoord;
-
 void main()
 {
     ngl_out_pos = ngl_projection_matrix * ngl_modelview_matrix * ngl_position;
@@ -37,8 +35,6 @@ void main()
 '''
 
 _FIELDS_FRAG = '''
-ngl_in vec2 var_uvcoord;
-
 float in_rect(vec4 rect, vec2 pos)
 {
     return (1.0 - step(pos.x, rect.x)) * step(pos.x, rect.x + rect.z) *
@@ -220,6 +216,7 @@ def get_render(cfg, quad, fields, block_definition, color_definition, block_fiel
     vertex = _FIELDS_VERT
 
     program = ngl.Program(vertex=vertex, fragment=fragment)
+    program.update_vert2frag_vars(var_uvcoord=ngl.IOVariable('vec2'))
     render = ngl.Render(quad, program)
 
     if isinstance(color_fields, dict):

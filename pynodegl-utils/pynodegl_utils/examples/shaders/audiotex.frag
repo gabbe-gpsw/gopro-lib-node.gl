@@ -1,6 +1,3 @@
-ngl_in vec2 var_tex0_coord;
-ngl_in vec2 var_tex1_coord;
-
 float wave(float smp, float y, float yoff)
 {
     float s = (smp + 1.0) / 2.0; // [-1;1] -> [0;1]

@@ -22,6 +22,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include "log.h"
 #include "nodegl.h"
 #include "nodes.h"
 
@@ -34,14 +35,30 @@ static const struct node_param program_params[] = {
     {"properties", PARAM_TYPE_NODEDICT, OFFSET(properties),
                    .node_types=(const int[]){NGL_NODE_RESOURCEPROPS, -1},
                    .desc=NGLI_DOCSTRING("resource properties")},
+    {"vert2frag_vars", PARAM_TYPE_NODEDICT, OFFSET(vert2frag_vars),
+                       .node_types=(const int[]){NGL_NODE_IOVARIABLE, -1},
+                       .desc=NGLI_DOCSTRING("in/out communication variables shared between vertex and fragment stages")},
     {"nb_frag_output", PARAM_TYPE_INT, OFFSET(nb_frag_output),
                        .desc=NGLI_DOCSTRING("number of color outputs in the fragment shader")},
     {NULL}
 };
 
+static int program_init(struct ngl_node *node)
+{
+    struct program_priv *s = node->priv_data;
+
+    if (!s->vertex || !s->fragment) {
+        LOG(ERROR, "both vertex and fragment shaders must be set");
+        return NGL_ERROR_INVALID_USAGE;
+    }
+
+    return 0;
+}
+
 const struct node_class ngli_program_class = {
     .id        = NGL_NODE_PROGRAM,
     .name      = "Program",
+    .init      = program_init,
     .priv_size = sizeof(struct program_priv),
     .params    = program_params,
     .file      = __FILE__,

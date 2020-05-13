@@ -38,7 +38,7 @@ struct hwconv {
 
     struct rendertarget rt;
     struct buffer vertices;
-    struct pgcraft crafter;
+    struct pgcraft *crafter;
     struct pipeline pipeline;
 };
 

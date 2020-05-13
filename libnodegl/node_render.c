@@ -42,6 +42,7 @@ struct render_priv {
     int nb_instances;
 
     struct pass pass;
+    struct darray vert2frag_vars; // pgcraft_named_iovar
 };
 
 #define PROGRAMS_TYPES_LIST (const int[]){NGL_NODE_PROGRAM,         \
@@ -149,7 +150,21 @@ static int render_init(struct ngl_node *node)
         return NGL_ERROR_INVALID_USAGE;
     }
 
+    ngli_darray_init(&s->vert2frag_vars, sizeof(struct pgcraft_named_iovar), 0);
     const struct program_priv *program = s->program->priv_data;
+    if (program->vert2frag_vars) {
+        const struct hmap_entry *e = NULL;
+        while ((e = ngli_hmap_next(program->vert2frag_vars, e))) {
+            const struct ngl_node *iovar_node = e->data;
+            const struct iovariable_priv *iovar_priv = iovar_node->priv_data;
+            struct pgcraft_named_iovar *iovar = ngli_darray_push(&s->vert2frag_vars, NULL);
+            if (!iovar)
+                return NGL_ERROR_MEMORY;
+            snprintf(iovar->name, sizeof(iovar->name), "%s", e->key);
+            iovar->type = iovar_priv->type;
+        }
+    }
+
     struct pass_params params = {
         .label = node->label,
         .geometry = s->geometry,
@@ -157,10 +172,12 @@ static int render_init(struct ngl_node *node)
         .frag_base = program->fragment,
         .vertex_resources = s->vertex_resources,
         .fragment_resources = s->fragment_resources,
-        .properties = program->properties : NULL,
+        .properties = program->properties,
         .attributes = s->attributes,
         .instance_attributes = s->instance_attributes,
         .nb_instances = s->nb_instances,
+        .vert2frag_vars = ngli_darray_data(&s->vert2frag_vars),
+        .nb_vert2frag_vars = ngli_darray_count(&s->vert2frag_vars),
         .nb_frag_output = program->nb_frag_output,
     };
     return ngli_pass_init(&s->pass, ctx, &params);
@@ -176,6 +193,7 @@ static void render_uninit(struct ngl_node *node)
 {
     struct render_priv *s = node->priv_data;
     ngli_pass_uninit(&s->pass);
+    ngli_darray_reset(&s->vert2frag_vars);
 }
 
 static int render_update(struct ngl_node *node, double t)
