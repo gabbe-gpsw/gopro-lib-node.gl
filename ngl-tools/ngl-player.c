@@ -31,8 +31,6 @@ struct sxplayer_info g_info;
 struct ngl_node *g_opacity_uniform;
 
 static const char *pgbar_shader = \
-"ngl_in vec2 var_tex0_coord;"                                           "\n" \
-                                                                        "\n" \
 "void main()"                                                           "\n" \
 "{"                                                                     "\n" \
 "    float height = 2.0 / 100. * ar;"                                   "\n" \

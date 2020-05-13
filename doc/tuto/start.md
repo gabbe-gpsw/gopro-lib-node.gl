@@ -87,8 +87,6 @@ like this one (that's the code currently being used to render the texture into
 the geometry):
 
 ```glsl
-ngl_in vec2 var_uvcoord;
-ngl_in vec2 var_tex0_coord;
 void main()
 {
     ngl_out_color = ngl_texvideo(tex0, var_tex0_coord);
@@ -130,7 +128,6 @@ def test_demo(cfg):
 With `~/mydemo.frag`:
 
 ```glsl
-ngl_in vec2 var_tex0_coord;
 void main()
 {
     vec4 color = vec4(1.0, 0.0, 0.0, 1.0);
@@ -225,7 +222,6 @@ Just like `color`, we will transmit it to the shader through uniforms.
 `~/mydemo.frag` ends up being:
 
 ```glsl
-ngl_in vec2 var_tex0_coord;
 void main()
 {
     vec4 video = ngl_tex2d(tex0, var_tex0_coord);

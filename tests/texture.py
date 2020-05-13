@@ -99,8 +99,6 @@ void main()
 
 
 _RENDER_CUBEMAP_VERT = '''
-ngl_out vec3 var_uvcoord;
-
 void main()
 {
     ngl_out_pos = ngl_projection_matrix * ngl_modelview_matrix * ngl_position;
@@ -110,8 +108,6 @@ void main()
 
 
 _RENDER_CUBEMAP_FRAG = '''
-ngl_in vec3 var_uvcoord;
-
 void main()
 {
     ngl_out_color = ngl_texcube(tex0, vec3(var_uvcoord.xy, 0.5));
@@ -151,6 +147,7 @@ def texture_cubemap(cfg):
     cube = ngl.TextureCube(size=n, min_filter="linear", mag_filter="linear", data_src=cb_buffer)
 
     program = ngl.Program(vertex=_RENDER_CUBEMAP_VERT, fragment=_RENDER_CUBEMAP_FRAG)
+    program.update_vert2frag_vars(var_uvcoord=ngl.IOVariable('vec3'))
     quad = ngl.Quad((-1, -1, 0), (2, 0, 0), (0, 2, 0))
     render = ngl.Render(quad, program)
     render.update_fragment_resources(tex0=cube)
@@ -209,8 +206,6 @@ def texture_scissor(cfg):
 
 
 _TEXTURE3D_VERT = '''
-ngl_out vec2 var_uvcoord;
-
 void main()
 {
     ngl_out_pos = ngl_projection_matrix * ngl_modelview_matrix * ngl_position;
@@ -220,8 +215,6 @@ void main()
 
 
 _TEXTURE3D_FRAG = '''
-ngl_in vec2 var_uvcoord;
-
 void main()
 {
     ngl_out_color  = ngl_tex3d(tex0, vec3(var_uvcoord, 0.0));
@@ -249,14 +242,13 @@ def texture_3d(cfg):
 
     quad = ngl.Quad((-1, -1, 0), (2, 0, 0), (0, 2, 0))
     program = ngl.Program(vertex=_TEXTURE3D_VERT, fragment=_TEXTURE3D_FRAG)
+    program.update_vert2frag_vars(var_uvcoord=ngl.IOVariable('vec2'))
     render = ngl.Render(quad, program)
     render.update_fragment_resources(tex0=texture)
     return render
 
 
 _RENDER_TEXTURE_LOD_VERT = '''
-ngl_out vec2 var_uvcoord;
-
 void main()
 {
     ngl_out_pos = ngl_position;
@@ -266,8 +258,6 @@ void main()
 
 
 _RENDER_TEXTURE_LOD_FRAG = '''
-ngl_in vec2 var_uvcoord;
-
 void main()
 {
     ngl_out_color = ngl_texlod(tex0, var_uvcoord, 0.5);
@@ -308,6 +298,7 @@ def texture_mipmap(cfg, show_dbg_points=False):
     )
 
     program = ngl.Program(vertex=_RENDER_TEXTURE_LOD_VERT, fragment=_RENDER_TEXTURE_LOD_FRAG)
+    program.update_vert2frag_vars(var_uvcoord=ngl.IOVariable('vec2'))
 
     quad = ngl.Quad((-1, -1, 0), (2, 0, 0), (0, 2, 0))
     render = ngl.Render(quad, program)

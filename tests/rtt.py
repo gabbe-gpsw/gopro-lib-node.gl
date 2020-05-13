@@ -77,8 +77,6 @@ def _get_cube():
 
 
 _RENDER_CUBE = '''
-ngl_in vec3 var_normal;
-
 void main()
 {
     ngl_out_color = vec4((var_normal + 1.0) / 2.0, 1.0);

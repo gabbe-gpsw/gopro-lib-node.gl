@@ -24,6 +24,7 @@
 #include <string.h>
 #include <limits.h>
 
+#include "darray.h"
 #include "hmap.h"
 #include "log.h"
 #include "nodegl.h"
@@ -31,6 +32,7 @@
 #include "params.h"
 #include "pass.h"
 #include "topology.h"
+#include "type.h"
 #include "utils.h"
 
 struct render_priv {
@@ -43,6 +45,7 @@ struct render_priv {
     int nb_instances;
 
     struct pass pass;
+    struct darray vert2frag_vars; // pgcraft_named_iovar
 };
 
 #define PROGRAMS_TYPES_LIST (const int[]){NGL_NODE_PROGRAM,         \
@@ -141,10 +144,6 @@ static const struct node_param render_params[] = {
 };
 
 static const char default_vertex_shader_tex[] =
-    "ngl_out vec2 var_uvcoord;"                                                         "\n"
-    "ngl_out vec3 var_normal;"                                                          "\n"
-    "ngl_out vec2 var_tex0_coord;"                                                      "\n"
-    ""                                                                                  "\n"
     "void main()"                                                                       "\n"
     "{"                                                                                 "\n"
     "    ngl_out_pos = ngl_projection_matrix * ngl_modelview_matrix * ngl_position;"    "\n"
@@ -154,9 +153,6 @@ static const char default_vertex_shader_tex[] =
     "}";
 
 static const char default_vertex_shader_notex[] =
-    "ngl_out vec2 var_uvcoord;"                                                         "\n"
-    "ngl_out vec3 var_normal;"                                                          "\n"
-    ""                                                                                  "\n"
     "void main()"                                                                       "\n"
     "{"                                                                                 "\n"
     "    ngl_out_pos = ngl_projection_matrix * ngl_modelview_matrix * ngl_position;"    "\n"
@@ -165,12 +161,16 @@ static const char default_vertex_shader_notex[] =
     "}";
 
 static const char default_fragment_shader[] =
-    "ngl_in vec2 var_tex0_coord;"                                                       "\n"
-    ""                                                                                  "\n"
     "void main()"                                                                       "\n"
     "{"                                                                                 "\n"
     "    ngl_out_color = ngl_texvideo(tex0, var_tex0_coord);"                           "\n"
     "}";
+
+static const struct pgcraft_named_iovar vert2frag_vars[] = {
+    {.name = "var_uvcoord",    .type = NGLI_TYPE_VEC2},
+    {.name = "var_normal",     .type = NGLI_TYPE_VEC3},
+    {.name = "var_tex0_coord", .type = NGLI_TYPE_VEC2},
+};
 
 static int has_tex(const struct hmap *resources)
 {
@@ -191,19 +191,54 @@ static int render_init(struct ngl_node *node)
     struct ngl_ctx *ctx = node->ctx;
     struct render_priv *s = node->priv_data;
     const struct program_priv *program = s->program ? s->program->priv_data : NULL;
-    const char *default_vertex_shader = has_tex(s->fragment_resources) ? default_vertex_shader_tex
-                                                                       : default_vertex_shader_notex;
+
+    const char *vert_base = program && program->vertex   ? program->vertex : NULL;
+    const char *frag_base = program && program->fragment ? program->fragment : NULL;
+
+    ngli_darray_init(&s->vert2frag_vars, sizeof(struct pgcraft_named_iovar), 0);
+
+    if (!vert_base || !frag_base) {
+        const int has_tex0 = has_tex(s->fragment_resources);
+
+        if (!ngli_darray_push(&s->vert2frag_vars, &vert2frag_vars[0]) ||
+            !ngli_darray_push(&s->vert2frag_vars, &vert2frag_vars[1]) ||
+            (has_tex0 && !ngli_darray_push(&s->vert2frag_vars, &vert2frag_vars[2])))
+            return NGL_ERROR_MEMORY;
+
+        if (!vert_base)
+            vert_base = has_tex0 ? default_vertex_shader_tex
+                                 : default_vertex_shader_notex;
+
+        if (!frag_base)
+            frag_base = default_fragment_shader;
+    }
+
+    if (program && program->vert2frag_vars) {
+        const struct hmap_entry *e = NULL;
+        while ((e = ngli_hmap_next(program->vert2frag_vars, e))) {
+            const struct ngl_node *iovar_node = e->data;
+            const struct iovariable_priv *iovar_priv = iovar_node->priv_data;
+            struct pgcraft_named_iovar *iovar = ngli_darray_push(&s->vert2frag_vars, NULL);
+            if (!iovar)
+                return NGL_ERROR_MEMORY;
+            snprintf(iovar->name, sizeof(iovar->name), "%s", e->key);
+            iovar->type = iovar_priv->type;
+        }
+    }
+
     struct pass_params params = {
         .label = node->label,
         .geometry = s->geometry,
-        .vert_base = program && program->vertex   ? program->vertex   : default_vertex_shader,
-        .frag_base = program && program->fragment ? program->fragment : default_fragment_shader,
+        .vert_base = vert_base,
+        .frag_base = frag_base,
         .vertex_resources = s->vertex_resources,
         .fragment_resources = s->fragment_resources,
         .properties = program ? program->properties : NULL,
         .attributes = s->attributes,
         .instance_attributes = s->instance_attributes,
         .nb_instances = s->nb_instances,
+        .vert2frag_vars = ngli_darray_data(&s->vert2frag_vars),
+        .nb_vert2frag_vars = ngli_darray_count(&s->vert2frag_vars),
         .nb_frag_output = program && program->nb_frag_output ? program->nb_frag_output : 0,
     };
     return ngli_pass_init(&s->pass, ctx, &params);
@@ -219,6 +254,7 @@ static void render_uninit(struct ngl_node *node)
 {
     struct render_priv *s = node->priv_data;
     ngli_pass_uninit(&s->pass);
+    ngli_darray_reset(&s->vert2frag_vars);
 }
 
 static int render_update(struct ngl_node *node, double t)

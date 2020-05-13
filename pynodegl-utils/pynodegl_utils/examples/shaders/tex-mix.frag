@@ -1,5 +1,3 @@
-ngl_in vec2 var_tex0_coord;
-ngl_in vec2 var_tex1_coord;
 void main()
 {
     vec4 c1 = ngl_texvideo(tex0, var_tex0_coord);

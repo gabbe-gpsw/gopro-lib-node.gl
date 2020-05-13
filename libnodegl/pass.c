@@ -154,8 +154,10 @@ static int register_texture(struct pass *s, const char *name, struct ngl_node *t
 
 static int register_block(struct pass *s, const char *name, struct ngl_node *block_node, int stage)
 {
+#ifndef VULKAN_BACKEND
     struct ngl_ctx *ctx = s->ctx;
     struct glcontext *gl = ctx->glcontext;
+#endif
 
     struct pgcraft_named_block crafter_block = {{0}};
     snprintf(crafter_block.name, sizeof(crafter_block.name), "%s", name);
@@ -172,10 +174,12 @@ static int register_block(struct pass *s, const char *name, struct ngl_node *blo
     if (block->layout == NGLI_BLOCK_LAYOUT_STD430) {
         LOG(DEBUG, "block %s has a std430 layout, switch to SSBO", name);
         type = NGLI_TYPE_STORAGE_BUFFER;
+#ifndef VULKAN_BACKEND
     } else if (block->size > gl->max_uniform_block_size) {
         LOG(DEBUG, "block %s is larger than the max UBO size (%d > %d), switch to SSBO",
             name, block->size, gl->max_uniform_block_size);
         type = NGLI_TYPE_STORAGE_BUFFER;
+#endif
     } else {
         const struct pass_params *params = &s->params;
         if (params->properties) {
@@ -465,6 +469,8 @@ int ngli_pass_prepare(struct pass *s)
         .nb_attributes  = ngli_darray_count(&s->crafter_attributes),
         .blocks         = ngli_darray_data(&s->crafter_blocks),
         .nb_blocks      = ngli_darray_count(&s->crafter_blocks),
+        .vert2frag_vars    = s->params.vert2frag_vars,
+        .nb_vert2frag_vars = s->params.nb_vert2frag_vars,
         .nb_frag_output = s->params.nb_frag_output,
     };
 
@@ -475,11 +481,12 @@ int ngli_pass_prepare(struct pass *s)
 
     memset(desc, 0, sizeof(*desc));
 
-    int ret = ngli_pgcraft_init(&desc->crafter, ctx);
+    struct pgcraft *crafter = &desc->crafter;
+    int ret = ngli_pgcraft_init(crafter, ctx);
     if (ret < 0)
         return ret;
 
-    ret = ngli_pgcraft_craft(&desc->crafter, &pipeline_params, &crafter_params);
+    ret = ngli_pgcraft_craft(crafter, &pipeline_params, &crafter_params);
     if (ret < 0)
         return ret;
 
@@ -488,9 +495,9 @@ int ngli_pass_prepare(struct pass *s)
     if (ret < 0)
         return ret;
 
-    desc->modelview_matrix_index = ngli_pipeline_get_uniform_index(pipeline, "ngl_modelview_matrix");
-    desc->projection_matrix_index = ngli_pipeline_get_uniform_index(pipeline, "ngl_projection_matrix");
-    desc->normal_matrix_index = ngli_pipeline_get_uniform_index(pipeline, "ngl_normal_matrix");
+    desc->modelview_matrix_index = ngli_pgcraft_get_uniform_index(crafter, "ngl_modelview_matrix", NGLI_PROGRAM_SHADER_VERT);
+    desc->projection_matrix_index = ngli_pgcraft_get_uniform_index(crafter, "ngl_projection_matrix", NGLI_PROGRAM_SHADER_VERT);
+    desc->normal_matrix_index = ngli_pgcraft_get_uniform_index(crafter, "ngl_normal_matrix", NGLI_PROGRAM_SHADER_VERT);
     return 0;
 }
 

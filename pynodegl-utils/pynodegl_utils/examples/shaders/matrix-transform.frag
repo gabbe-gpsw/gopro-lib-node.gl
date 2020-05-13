@@ -1,5 +1,3 @@
-ngl_in vec2 var_tex0_coord;
-
 void main()
 {
     vec2 coords = var_tex0_coord * 2.0 - 1.0;

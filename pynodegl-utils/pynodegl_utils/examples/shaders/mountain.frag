@@ -1,5 +1,3 @@
-ngl_in vec2 var_tex0_coord;
-
 float f(float t)
 {
     // 6t^5 - 15t^4 + 10t^3 (new Perlin)

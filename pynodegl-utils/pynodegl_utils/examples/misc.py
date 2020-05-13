@@ -98,6 +98,7 @@ def triangle(cfg, size=0.5):
 
     triangle = ngl.Triangle((-b, -c, 0), (b, -c, 0), (0, size, 0))
     p = ngl.Program(fragment=cfg.get_frag('triangle'), vertex=cfg.get_vert('triangle'))
+    p.update_vert2frag_vars(var_color=ngl.IOVariable('vec4'))
     node = ngl.Render(triangle, p)
     node.update_attributes(edge_color=colors_buffer)
     animkf = [ngl.AnimKeyFrameFloat(0, 0),
@@ -220,6 +221,8 @@ def audiotex(cfg, freq_precision=7, overlay=0.6):
 
     p = ngl.Program(vertex=cfg.get_vert('dual-tex'),
                     fragment=cfg.get_frag('audiotex'))
+    p.update_vert2frag_vars(var_tex0_coord=ngl.IOVariable('vec2'),
+                            var_tex1_coord=ngl.IOVariable('vec2'))
     render = ngl.Render(q, p)
     render.update_fragment_resources(tex0=audio_tex, tex1=video_tex)
     render.update_fragment_resources(overlay=ngl.UniformFloat(overlay))
@@ -511,6 +514,8 @@ def histogram(cfg):
     q = ngl.Quad((-1, -1, 0), (2, 0, 0), (0, 2, 0))
     p = ngl.Program(vertex=cfg.get_vert('histogram-display'),
                     fragment=cfg.get_frag('histogram-display'))
+    p.update_vert2frag_vars(var_uvcoord=ngl.IOVariable('vec2'),
+                            var_tex0_coord=ngl.IOVariable('vec2'))
     render = ngl.Render(q, p)
     render.update_fragment_resources(tex0=t, hist=h)
     g.add_children(render)

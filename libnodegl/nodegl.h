@@ -145,6 +145,7 @@ struct ngl_node;
 #define NGL_NODE_GROUP                  NGLI_FOURCC('G','r','p',' ')
 #define NGL_NODE_HUD                    NGLI_FOURCC('H','U','D',' ')
 #define NGL_NODE_IDENTITY               NGLI_FOURCC('I','d',' ',' ')
+#define NGL_NODE_IOVARIABLE             NGLI_FOURCC('I','O','v','r')
 #define NGL_NODE_MEDIA                  NGLI_FOURCC('M','d','i','a')
 #define NGL_NODE_PROGRAM                NGLI_FOURCC('P','r','g','m')
 #define NGL_NODE_QUAD                   NGLI_FOURCC('Q','u','a','d')

@@ -34,6 +34,9 @@ static const struct node_param program_params[] = {
     {"properties", PARAM_TYPE_NODEDICT, OFFSET(properties),
                    .node_types=(const int[]){NGL_NODE_RESOURCEPROPS, -1},
                    .desc=NGLI_DOCSTRING("resource properties")},
+    {"vert2frag_vars", PARAM_TYPE_NODEDICT, OFFSET(vert2frag_vars),
+                       .node_types=(const int[]){NGL_NODE_IOVARIABLE, -1},
+                       .desc=NGLI_DOCSTRING("in/out communication variables shared between vertex and fragment stages")},
     {"nb_frag_output", PARAM_TYPE_INT, OFFSET(nb_frag_output),
                        .desc=NGLI_DOCSTRING("number of color outputs in the fragment shader")},
     {NULL}

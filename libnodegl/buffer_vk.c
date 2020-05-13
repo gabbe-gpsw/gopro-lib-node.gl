@@ -24,6 +24,7 @@
 #include <vulkan/vulkan.h>
 
 #include "buffer.h"
+#include "log.h"
 #include "nodes.h"
 
 #define USAGE (VK_BUFFER_USAGE_VERTEX_BUFFER_BIT  | \
@@ -60,12 +61,16 @@ int ngli_buffer_init(struct buffer *s, struct ngl_ctx *ctx, int size, int usage)
         .memoryTypeIndex = memory_type_index,
     };
     vkret = vkAllocateMemory(vk->device, &alloc_info, NULL, &s->vkmem);
-    if (vkret != VK_SUCCESS)
-        return -1;
+    if (vkret != VK_SUCCESS) {
+        LOG(ERROR, "can not allocate memory");
+        return NGL_ERROR_MEMORY;
+    }
 
     vkret = vkBindBufferMemory(vk->device, s->vkbuf, s->vkmem, 0);
-    if (vkret != VK_SUCCESS)
-        return -1;
+    if (vkret != VK_SUCCESS) {
+        LOG(ERROR, "can not bind memory");
+        return NGL_ERROR_MEMORY;
+    }
 
     return 0;
 }

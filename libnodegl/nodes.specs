@@ -264,6 +264,10 @@
 
 - Identity:
 
+- IOVariable:
+    constructors:
+        - [type, select]
+
 - Media:
     constructors:
         - [filename, string]
@@ -282,6 +286,7 @@
         - [vertex, string]
         - [fragment, string]
         - [properties, NodeDict]
+        - [vert2frag_vars, NodeDict]
         - [nb_frag_output, int]
 
 - Quad:
