@@ -23,12 +23,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
-#include <vulkan/vulkan_core.h>
+#include <vulkan/vulkan.h>
 
+#include "buffer.h"
 #include "darray.h"
 #include "format.h"
-#include "buffer.h"
-#include "vkcontext.h"
+#include "gctx_vk.h"
 #include "glincludes.h"
 #include "hmap.h"
 #include "image.h"
@@ -38,11 +38,14 @@
 #include "nodegl.h"
 #include "nodes.h"
 #include "pipeline.h"
-#include "type.h"
+#include "spirv.h"
 #include "texture.h"
 #include "texture_vk.h"
+#include "texture_vk.h"
 #include "topology.h"
+#include "type.h"
 #include "utils.h"
+#include "vkcontext.h"
 
 struct uniform_pair {
     uint64_t offset;
@@ -249,7 +252,7 @@ static int pipeline_graphics_init(struct pipeline *s, const struct pipeline_para
         .polygonMode = VK_POLYGON_MODE_FILL,
         .lineWidth = 1.f,
         .cullMode = get_vk_cull_mode(state->cull_face_mode),
-        .frontFace = VK_FRONT_FACE_CLOCKWISE,
+        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
     };
 
     /* Multisampling */
@@ -289,21 +292,24 @@ static int pipeline_graphics_init(struct pipeline *s, const struct pipeline_para
     };
 
     /* Blend */
-    VkPipelineColorBlendAttachmentState colorblend_attachment_state = {
-        .blendEnable = state->blend,
-        .srcColorBlendFactor = get_vk_blend_factor(state->blend_src_factor),
-        .dstColorBlendFactor = get_vk_blend_factor(state->blend_dst_factor),
-        .colorBlendOp = get_vk_blend_op(state->blend_op),
-        .srcAlphaBlendFactor = get_vk_blend_factor(state->blend_src_factor_a),
-        .dstAlphaBlendFactor = get_vk_blend_factor(state->blend_dst_factor_a),
-        .alphaBlendOp = get_vk_blend_op(state->blend_op_a),
-        .colorWriteMask = get_vk_color_write_mask(state->color_write_mask),
-    };
+    VkPipelineColorBlendAttachmentState colorblend_attachment_states[NGLI_MAX_COLOR_ATTACHMENTS] = {0};
+    for (int i = 0; i < graphics->rt_desc.nb_color_formats; i++) {
+        colorblend_attachment_states[i] = (VkPipelineColorBlendAttachmentState) {
+            .blendEnable = state->blend,
+            .srcColorBlendFactor = get_vk_blend_factor(state->blend_src_factor),
+            .dstColorBlendFactor = get_vk_blend_factor(state->blend_dst_factor),
+            .colorBlendOp = get_vk_blend_op(state->blend_op),
+            .srcAlphaBlendFactor = get_vk_blend_factor(state->blend_src_factor_a),
+            .dstAlphaBlendFactor = get_vk_blend_factor(state->blend_dst_factor_a),
+            .alphaBlendOp = get_vk_blend_op(state->blend_op_a),
+            .colorWriteMask = get_vk_color_write_mask(state->color_write_mask),
+        };
+    }
 
     VkPipelineColorBlendStateCreateInfo colorblend_state_create_info = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-        .attachmentCount = 1,
-        .pAttachments = &colorblend_attachment_state,
+        .attachmentCount = graphics->rt_desc.nb_color_formats,
+        .pAttachments = colorblend_attachment_states,
     };
 
     /* Dynamic states */
@@ -410,12 +416,16 @@ static const VkDescriptorType descriptor_type_map[] = {
     [NGLI_TYPE_STORAGE_BUFFER] = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
     [NGLI_TYPE_SAMPLER_2D]     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
     [NGLI_TYPE_SAMPLER_3D]     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+    [NGLI_TYPE_SAMPLER_CUBE]   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
     [NGLI_TYPE_IMAGE_2D]       = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
 };
 
 static VkDescriptorType get_descriptor_type(int type)
 {
-    return descriptor_type_map[type];
+    ngli_assert(type >= 0 && type < NGLI_TYPE_NB);
+    VkDescriptorType descriptor_type = descriptor_type_map[type];
+    ngli_assert(descriptor_type);
+    return descriptor_type;
 }
 
 static int create_desc_set_layout_bindings(struct pipeline *s, const struct pipeline_params *params)
@@ -425,12 +435,15 @@ static int create_desc_set_layout_bindings(struct pipeline *s, const struct pipe
 
     ngli_darray_init(&s->desc_set_layout_bindings, sizeof(VkDescriptorSetLayoutBinding), 0);
 
-    VkDescriptorPoolSize desc_pool_size_map[] = {
+    VkDescriptorPoolSize desc_pool_size_map[NGLI_TYPE_NB] = {
         [NGLI_TYPE_UNIFORM_BUFFER] = {.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER},
         [NGLI_TYPE_STORAGE_BUFFER] = {.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER},
         [NGLI_TYPE_SAMPLER_2D]     = {.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER},
+        [NGLI_TYPE_SAMPLER_3D]     = {.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER},
+        [NGLI_TYPE_SAMPLER_CUBE]   = {.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER},
         [NGLI_TYPE_IMAGE_2D]       = {.type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE},
     };
+    /* FIXME: Check access of size_map */
 
     for (int i = 0; i < params->nb_buffers; i++) {
         const struct pipeline_buffer *pipeline_buffer = &params->buffers[i];
@@ -729,9 +742,6 @@ static VkIndexType get_vk_indices_type(int indices_format)
 {
     return vk_indices_type_map[indices_format];
 }
-
-#include "gctx_vk.h"
-#include "texture_vk.h"
 
 void ngli_pipeline_exec(struct pipeline *s)
 {

@@ -47,6 +47,7 @@ int ngli_gtimer_init(struct gtimer *s, struct ngl_ctx *ctx)
 
 static int write_ts(struct gtimer *s, int query)
 {
+#if 0
     struct vkcontext *vk = s->ctx->vkcontext;
 
     // XXX: we are always comparing from the top of the pipe; is this correct?
@@ -54,22 +55,31 @@ static int write_ts(struct gtimer *s, int query)
     vkCmdWriteTimestamp(command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, s->query_pool, query);
 
     return 0;
+#else
+    return 0;
+#endif
 }
 
 int ngli_gtimer_start(struct gtimer *s)
 {
+#if 0
     struct vkcontext *vk = s->ctx->vkcontext;
 
     ngli_gctx_vk_end_render_pass(s->ctx);
 
     VkCommandBuffer command_buffer = vk->cur_command_buffer;
+
     vkCmdResetQueryPool(command_buffer, s->query_pool, 0, 2);
 
     return write_ts(s, 0);
+#else
+    return 0;
+#endif
 }
 
 int ngli_gtimer_stop(struct gtimer *s)
 {
+#if 0
     //struct vkcontext *vk = s->ctx->vkcontext;
     ngli_gctx_vk_end_render_pass(s->ctx);
 
@@ -89,6 +99,9 @@ int ngli_gtimer_stop(struct gtimer *s)
                           */
 
     return 0;
+#else
+    return 0;
+#endif
 }
 
 int64_t ngli_gtimer_read(struct gtimer *s)

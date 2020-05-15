@@ -116,6 +116,10 @@ static int rtt_init(struct ngl_node *node)
     static const float clear_color[4] = DEFAULT_CLEAR_COLOR;
     s->use_clear_color = memcmp(s->clear_color, clear_color, sizeof(s->clear_color));
 
+#ifdef VULKAN_BACKEND
+    s->vflip = 0;
+#endif
+
     return 0;
 }
 
@@ -128,7 +132,9 @@ static int rtt_prepare(struct ngl_node *node)
     for (int i = 0; i < s->nb_color_textures; i++) {
         const struct texture_priv *texture_priv = s->color_textures[i]->priv_data;
         const struct texture_params *params = &texture_priv->params;
-        desc.color_formats[desc.nb_color_formats++] = params->format;
+        const int faces = params->type == NGLI_TEXTURE_TYPE_CUBE ? 6 : 1;
+        for (int j = 0; j < faces; j++)
+            desc.color_formats[desc.nb_color_formats++] = params->format;
     }
     if (s->depth_texture) {
         const struct texture_priv *depth_texture_priv = s->depth_texture->priv_data;

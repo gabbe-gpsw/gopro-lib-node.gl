@@ -154,20 +154,43 @@ int ngli_texture_init(struct texture *s,
             s->mipmap_levels += 1;
     }
 
+    VkImageType image_type;
+    VkImageViewType view_type;
+    int depth = 1;
+    int array_layers = 1;
+    int flags = 0;
+
+    if (params->type == NGLI_TEXTURE_TYPE_2D) {
+        image_type = VK_IMAGE_TYPE_2D;
+        view_type = VK_IMAGE_VIEW_TYPE_2D;
+    } else if (params->type == NGLI_TEXTURE_TYPE_3D) {
+        image_type = VK_IMAGE_TYPE_3D;
+        view_type = VK_IMAGE_VIEW_TYPE_3D;
+        depth = params->depth;
+    } else if (params->type == NGLI_TEXTURE_TYPE_CUBE) {
+        image_type = VK_IMAGE_TYPE_2D;
+        view_type = VK_IMAGE_VIEW_TYPE_CUBE;
+        array_layers = 6;
+        flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+    } else {
+        ngli_assert(0);
+    }
+
     VkImageCreateInfo image_create_info = {
         .sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        .imageType     = VK_IMAGE_TYPE_2D,
+        .imageType     = image_type,
         .extent.width  = params->width,
         .extent.height = params->height,
-        .extent.depth  = 1,
+        .extent.depth  = depth,
         .mipLevels     = s->mipmap_levels,
-        .arrayLayers   = 1,
+        .arrayLayers   = array_layers,
         .format        = s->format,
         .tiling        = tiling,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
         .usage         = usage,
         .samples       = VK_SAMPLE_COUNT_1_BIT,
         .sharingMode   = VK_SHARING_MODE_EXCLUSIVE,
+        .flags         = flags,
     };
 
     VkResult vkret = vkCreateImage(vk->device, &image_create_info, NULL, &s->image);
@@ -179,7 +202,7 @@ int ngli_texture_init(struct texture *s,
 
     VkMemoryAllocateInfo alloc_info = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-.allocationSize = mem_requirements.size,
+        .allocationSize = mem_requirements.size,
         .memoryTypeIndex = ngli_vk_find_memory_type(vk, mem_requirements.memoryTypeBits, memory_property_flags),
     };
 
@@ -192,7 +215,7 @@ int ngli_texture_init(struct texture *s,
         return -1;
 
     s->image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
-    s->image_size = s->params.width * s->params.height * ngli_format_get_bytes_per_pixel(s->params.format);
+    s->image_size = s->params.width * s->params.height * ngli_format_get_bytes_per_pixel(s->params.format) * array_layers * (params->type == NGLI_TEXTURE_TYPE_3D ? params->depth : 1);
 
     /* FIXME */
     transition_image_layout(s, s->image, s->format, s->image_layout, VK_IMAGE_LAYOUT_GENERAL);
@@ -200,7 +223,7 @@ int ngli_texture_init(struct texture *s,
     VkImageViewCreateInfo view_info = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .image = s->image,
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .viewType = view_type,
         .format = s->format,
         .subresourceRange.aspectMask = get_vk_image_aspect_flags(s->format),
         .subresourceRange.baseMipLevel = 0,
@@ -221,15 +244,15 @@ int ngli_texture_init(struct texture *s,
         .addressModeV = ngli_texture_get_vk_wrap(s->params.wrap_t),
         .addressModeW = ngli_texture_get_vk_wrap(s->params.wrap_r),
         .anisotropyEnable = VK_FALSE,
-        .maxAnisotropy = 0,
+        .maxAnisotropy = 1.0f,
         .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
         .unnormalizedCoordinates = VK_FALSE,
         .compareEnable = VK_FALSE,
         .compareOp = VK_COMPARE_OP_ALWAYS,
         .mipmapMode = ngli_texture_get_vk_mipmap_mode(s->params.mipmap_filter),
-        .minLod = 0.0,
+        .minLod = 0.0f,
         .maxLod = s->mipmap_levels,
-        .mipLodBias = 0.0,
+        .mipLodBias = 0.0f,
     };
 
     vkret = vkCreateSampler(vk->device, &sampler_info, NULL, &s->image_sampler);
@@ -411,8 +434,13 @@ int ngli_texture_upload(struct texture *s, const uint8_t *data, int linesize)
     ngli_assert(!s->external_storage && !(params->usage & NGLI_TEXTURE_USAGE_ATTACHMENT_ONLY));
 
     if (data) {
-        void *mapped_data;
+        int face = 1;
+        if (params->type == NGLI_TEXTURE_TYPE_CUBE)
+            face = 6;
+
         /* TODO: check return */
+        LOG(ERROR, "data=%d", face);
+        void *mapped_data;
         vkMapMemory(vk->device, s->staging_buffer_memory, 0, s->image_size, 0, &mapped_data);
         memcpy(mapped_data, data, s->image_size);
         vkUnmapMemory(vk->device, s->staging_buffer_memory);
@@ -425,33 +453,43 @@ int ngli_texture_upload(struct texture *s, const uint8_t *data, int linesize)
         const VkImageSubresourceRange subres_range = {
             .aspectMask = get_vk_image_aspect_flags(s->format),
             .baseMipLevel = 0,
-            .levelCount = VK_REMAINING_MIP_LEVELS,
+            .levelCount = 1,
             .baseArrayLayer = 0,
             .layerCount = VK_REMAINING_ARRAY_LAYERS,
         };
+        ngli_vk_transition_image_layout(vk, command_buffer, s->image, s->image_layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &subres_range);
 
-        VkImage image = s->image;
+        struct darray copy_regions;
+        ngli_darray_init(&copy_regions, sizeof(VkBufferImageCopy), 0);
 
-        ngli_vk_transition_image_layout(vk, command_buffer, image, s->image_layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &subres_range);
+        int layer_size = s->params.width * s->params.height * ngli_format_get_bytes_per_pixel(s->params.format);
+        for (int i = 0; i < face; i++) {
+            VkDeviceSize offset = i * layer_size;
+            VkBufferImageCopy region = {
+                .bufferOffset = offset,
+                .bufferRowLength = 0,
+                .bufferImageHeight = 0,
+                .imageSubresource.aspectMask = get_vk_image_aspect_flags(s->format),
+                .imageSubresource.mipLevel = 0,
+                .imageSubresource.baseArrayLayer = i,
+                .imageSubresource.layerCount = 1,
+                .imageOffset = {0, 0, 0},
+                .imageExtent = {
+                    params->width,
+                    params->height,
+                    params->depth ? params->depth : 1,
+                }
+            };
 
-        VkBufferImageCopy region = {
-            .bufferOffset = 0,
-            .bufferRowLength = 0,
-            .bufferImageHeight = 0,
-            .imageSubresource.aspectMask = get_vk_image_aspect_flags(s->format),
-            .imageSubresource.mipLevel = 0,
-            .imageSubresource.baseArrayLayer = 0,
-            .imageSubresource.layerCount = 1,
-            .imageOffset = {0, 0, 0},
-            .imageExtent = {
-                params->width,
-                params->height,
-                1,
+            if (!ngli_darray_push(&copy_regions, &region)) {
+                /* FIXME */
+                return -1;
             }
-        };
-        vkCmdCopyBufferToImage(command_buffer, s->staging_buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+        }
 
-        ngli_vk_transition_image_layout(vk, command_buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, s->image_layout, &subres_range);
+        vkCmdCopyBufferToImage(command_buffer, s->staging_buffer, s->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, ngli_darray_count(&copy_regions), ngli_darray_data(&copy_regions));
+
+        ngli_vk_transition_image_layout(vk, command_buffer, s->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, s->image_layout, &subres_range);
 
         ret = ngli_vk_execute_transient_command(vk, command_buffer);
         if (ret < 0)
@@ -503,7 +541,7 @@ int ngli_texture_generate_mipmap(struct texture *s)
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
         .subresourceRange.baseArrayLayer = 0,
-        .subresourceRange.layerCount = 1,
+        .subresourceRange.layerCount = params->type == NGLI_TEXTURE_TYPE_CUBE ? 6 : 1,
         .subresourceRange.levelCount = 1,
     };
 
@@ -533,13 +571,13 @@ int ngli_texture_generate_mipmap(struct texture *s)
             .srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
             .srcSubresource.mipLevel = i - 1,
             .srcSubresource.baseArrayLayer = 0,
-            .srcSubresource.layerCount = 1,
+            .srcSubresource.layerCount = params->type == NGLI_TEXTURE_TYPE_CUBE ? 6 : 1,
             .dstOffsets[0] = (VkOffset3D){0, 0, 0},
             .dstOffsets[1] = (VkOffset3D){ mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 },
             .dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
             .dstSubresource.mipLevel = i,
             .dstSubresource.baseArrayLayer = 0,
-            .dstSubresource.layerCount = 1,
+            .dstSubresource.layerCount = params->type == NGLI_TEXTURE_TYPE_CUBE ? 6 : 1,
         };
 
         vkCmdBlitImage(command_buffer,

@@ -462,6 +462,8 @@ static int texture3d_init(struct ngl_node *node)
 
 static int texturecube_init(struct ngl_node *node)
 {
+    struct texture_priv *s = node->priv_data;
+    s->params.type = NGLI_TEXTURE_TYPE_CUBE;
 #ifndef VULKAN_BACKEND
     struct ngl_ctx *ctx = node->ctx;
     struct glcontext *gl = ctx->glcontext;
