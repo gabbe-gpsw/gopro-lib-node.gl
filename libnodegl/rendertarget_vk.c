@@ -131,11 +131,14 @@ int ngli_rendertarget_init(struct rendertarget *s, struct ngl_ctx *ctx, const st
 
     ngli_assert(params->nb_colors <= NGLI_MAX_COLOR_ATTACHMENTS);
 
+
     struct rendertarget_desc desc = {0};
     for (int i = 0; i < params->nb_colors; i++) {
         const struct texture *color = params->colors[i];
         const struct texture_params *params = &color->params;
-        desc.color_formats[desc.nb_color_formats++] = params->format;
+        const int nb_layers = params->type == NGLI_TEXTURE_TYPE_CUBE ? 6 : 1;
+        for (int j = 0; j < nb_layers; j++)
+            desc.color_formats[desc.nb_color_formats++] = params->format;
     }
     if (params->depth_stencil) {
         const struct texture *depth_stencil = params->depth_stencil;
@@ -156,23 +159,26 @@ int ngli_rendertarget_init(struct rendertarget *s, struct ngl_ctx *ctx, const st
 
     for (int i = 0; i < params->nb_colors; i++) {
         const struct texture *texture = params->colors[i];
-
-        VkImageViewCreateInfo view_info = {
-            .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-            .image = texture->image,
-            .viewType = VK_IMAGE_VIEW_TYPE_2D,
-            .format = texture->format,
-            .subresourceRange.aspectMask = get_vk_image_aspect_flags(texture->format),
-            .subresourceRange.baseMipLevel = 0,
-            .subresourceRange.levelCount = 1,
-            .subresourceRange.baseArrayLayer = 0,
-            .subresourceRange.layerCount = 1,
-        };
+        const struct texture_params *params = &texture->params;
+        const int nb_layers = params->type == NGLI_TEXTURE_TYPE_CUBE ? 6 : 1;
+        for (int j = 0; j < nb_layers; j++) {
+            VkImageViewCreateInfo view_info = {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+                .image = texture->image,
+                .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                .format = texture->format,
+                .subresourceRange.aspectMask = get_vk_image_aspect_flags(texture->format),
+                .subresourceRange.baseMipLevel = 0,
+                .subresourceRange.levelCount = 1,
+                .subresourceRange.baseArrayLayer = j,
+                .subresourceRange.layerCount = 1,
+            };
 
         VkResult vkret = vkCreateImageView(vk->device, &view_info, NULL, &s->attachments[s->nb_attachments]);
         if (vkret != VK_SUCCESS)
             return -1;
         s->nb_attachments++;
+        }
     }
 
     if (params->depth_stencil) {
