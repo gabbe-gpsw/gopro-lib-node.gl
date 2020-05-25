@@ -38,7 +38,6 @@
 #include "nodegl.h"
 #include "nodes.h"
 #include "pipeline.h"
-#include "spirv.h"
 #include "texture.h"
 #include "texture_vk.h"
 #include "texture_vk.h"
@@ -252,7 +251,7 @@ static int pipeline_graphics_init(struct pipeline *s, const struct pipeline_para
         .polygonMode = VK_POLYGON_MODE_FILL,
         .lineWidth = 1.f,
         .cullMode = get_vk_cull_mode(state->cull_face_mode),
-        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+        .frontFace = VK_FRONT_FACE_CLOCKWISE,
     };
 
     /* Multisampling */
@@ -712,6 +711,7 @@ int ngli_pipeline_update_texture(struct pipeline *s, int index, struct texture *
     struct pipeline_texture *pairs = ngli_darray_data(&s->texture_descs);
     struct pipeline_texture *pipeline_texture = &pairs[index];
     pipeline_texture->texture = texture;
+
     ngli_texture_vk_transition_layout(texture, VK_IMAGE_LAYOUT_GENERAL);
 
     VkDescriptorImageInfo image_info = {
@@ -760,6 +760,9 @@ void ngli_pipeline_exec(struct pipeline *s)
     struct texture_pair *pairs = ngli_darray_data(&s->texture_descs);
     for (int i = 0; i < ngli_darray_count(&s->texture_descs); i++) {
         struct pipeline_texture *texture = &pairs[i].texture;
+        LOG(ERROR, "index=%d, ptr=%p", i, texture->texture);
+        if (!texture->texture)
+            continue;
         ngli_texture_vk_transition_layout(texture->texture, VK_IMAGE_LAYOUT_GENERAL);
     }
 
