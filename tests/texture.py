@@ -117,12 +117,14 @@ void main()
 
 def _get_texture_cubemap_from_mrt_scene(cfg, samples=0):
     program = ngl.Program(vertex=_RENDER_TO_CUBEMAP_VERT, fragment=_RENDER_TO_CUBEMAP_FRAG, nb_frag_output=6)
+    program.update_vert2frag_vars(var_uvcoord=ngl.IOVariable("vec3"))
     quad = ngl.Quad((-1, -1, 0), (2, 0, 0), (0, 2, 0))
     render = ngl.Render(quad, program)
     cube = ngl.TextureCube(size=64, min_filter="linear", mag_filter="linear")
     rtt = ngl.RenderToTexture(render, [cube], samples=samples)
 
     program = ngl.Program(vertex=_RENDER_CUBEMAP_VERT, fragment=_RENDER_CUBEMAP_FRAG)
+    program.update_vert2frag_vars(var_uvcoord=ngl.IOVariable("vec3"))
     render = ngl.Render(quad, program)
     render.update_fragment_resources(tex0=cube)
 
