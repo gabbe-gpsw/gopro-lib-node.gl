@@ -212,6 +212,7 @@ static const int texture_types_map[NGLI_PGCRAFT_SHADER_TEX_TYPE_NB][NGLI_INFO_FI
         [NGLI_INFO_FIELD_COORDINATE_MATRIX] = NGLI_TYPE_MAT4,
         [NGLI_INFO_FIELD_DIMENSIONS]        = NGLI_TYPE_VEC2,
         [NGLI_INFO_FIELD_TIMESTAMP]         = NGLI_TYPE_FLOAT,
+#if !defined(VULKAN_BACKEND)
 #if defined(TARGET_ANDROID)
         [NGLI_INFO_FIELD_SAMPLING_MODE]     = NGLI_TYPE_INT,
         [NGLI_INFO_FIELD_OES_SAMPLER]       = NGLI_TYPE_SAMPLER_EXTERNAL_OES,
@@ -225,6 +226,7 @@ static const int texture_types_map[NGLI_PGCRAFT_SHADER_TEX_TYPE_NB][NGLI_INFO_FI
         [NGLI_INFO_FIELD_Y_RECT_SAMPLER]    = NGLI_TYPE_SAMPLER_2D_RECT,
         [NGLI_INFO_FIELD_UV_RECT_SAMPLER]   = NGLI_TYPE_SAMPLER_2D_RECT,
         [NGLI_INFO_FIELD_COLOR_MATRIX]      = NGLI_TYPE_MAT4,
+#endif
 #endif
     },
     [NGLI_PGCRAFT_SHADER_TEX_TYPE_IMAGE2D] = {
@@ -626,6 +628,9 @@ static int handle_token(struct pgcraft *s, const struct token *token, const char
         p++;
 
         ngli_bstr_print(dst, "(");
+#if defined VULKAN_BACKEND
+        ngli_bstr_printf(dst, "ngl_tex2d(%.*s, %.*s)", ARG_FMT(arg0), ARG_FMT(coords));
+#else
 #if defined(TARGET_ANDROID)
         if (!fast_picking)
             ngli_bstr_printf(dst, "%.*s_sampling_mode == 2 ? ", ARG_FMT(arg0));
@@ -654,6 +659,7 @@ static int handle_token(struct pgcraft *s, const struct token *token, const char
             ngli_bstr_printf(dst, " : ngl_tex2d(%.*s, %.*s)", ARG_FMT(arg0), ARG_FMT(coords));
 #else
         ngli_bstr_printf(dst, "ngl_tex2d(%.*s, %.*s)", ARG_FMT(arg0), ARG_FMT(coords));
+#endif
 #endif
         ngli_bstr_print(dst, ")");
         ngli_bstr_print(dst, p);
