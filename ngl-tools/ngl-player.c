@@ -36,7 +36,7 @@ static const char pgbar_vertex[] = \
                                                                                          \
 "void main()"                                                                       "\n" \
 "{"                                                                                 "\n" \
-"    gl_Position = ngl_projection_matrix * ngl_modelview_matrix * ngl_position;"    "\n" \
+"    ngl_out_pos = ngl_projection_matrix * ngl_modelview_matrix * ngl_position;"    "\n" \
 "    var_uvcoord = ngl_uvcoord;"                                                    "\n" \
 "    var_tex0_coord = (tex0_coord_matrix * vec4(ngl_uvcoord, 0.0, 1.0)).xy;"        "\n" \
 "}";
@@ -49,7 +49,7 @@ static const char *pgbar_fragment = \
 "    float height = 2.0 / 100. * ar;"                                   "\n" \
 "    float x = var_tex0_coord.x;"                                       "\n" \
 "    float y = var_tex0_coord.y;"                                       "\n" \
-"    vec4 video_pix = ngl_texvideo(tex0_sampler, var_tex0_coord);"      "\n" \
+"    vec4 video_pix = ngl_texvideo(tex0, var_tex0_coord);"              "\n" \
 "    vec4 color = video_pix;"                                           "\n" \
 "    float time = tex0_ts / media_duration;"                            "\n" \
 "    if (y > 1. - height)"                                              "\n" \

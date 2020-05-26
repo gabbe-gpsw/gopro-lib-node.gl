@@ -77,17 +77,17 @@ def _get_cube():
 
 
 _RENDER_CUBE_VERT = '''
-varying vec3 var_normal;
+ngl_out vec3 var_normal;
 void main()
 {
-    gl_Position = ngl_projection_matrix * ngl_modelview_matrix * ngl_position;
+    ngl_out_pos = ngl_projection_matrix * ngl_modelview_matrix * ngl_position;
     var_normal = ngl_normal_matrix * ngl_normal;
 }
 '''
 
 
 _RENDER_CUBE_FRAG = '''
-varying vec3 var_normal;
+ngl_in vec3 var_normal;
 
 void main()
 {

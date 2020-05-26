@@ -22,6 +22,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include "log.h"
 #include "nodegl.h"
 #include "nodes.h"
 
@@ -39,9 +40,22 @@ static const struct node_param program_params[] = {
     {NULL}
 };
 
+static int program_init(struct ngl_node *node)
+{
+    struct program_priv *s = node->priv_data;
+
+    if (!s->vertex || !s->fragment) {
+        LOG(ERROR, "both vertex and fragment shaders must be set");
+        return NGL_ERROR_INVALID_USAGE;
+    }
+
+    return 0;
+}
+
 const struct node_class ngli_program_class = {
     .id        = NGL_NODE_PROGRAM,
     .name      = "Program",
+    .init      = program_init,
     .priv_size = sizeof(struct program_priv),
     .params    = program_params,
     .file      = __FILE__,

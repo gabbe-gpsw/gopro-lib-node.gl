@@ -49,35 +49,22 @@ from pynodegl_utils.misc import scene
 
 
 _VERTEX = '''
-#version 100
-
-precision highp float;
-attribute vec4 ngl_position;
-attribute vec2 ngl_uvcoord;
-uniform mat4 ngl_modelview_matrix;
-uniform mat4 ngl_projection_matrix;
-
-uniform mat4 tex0_coord_matrix;
-varying vec2 var_tex0_coord;
+ngl_out vec2 var_tex0_coord;
 
 void main()
 {
-    gl_Position = ngl_projection_matrix * ngl_modelview_matrix * ngl_position;
+    ngl_out_pos = ngl_projection_matrix * ngl_modelview_matrix * ngl_position;
     var_tex0_coord = (tex0_coord_matrix * vec4(ngl_uvcoord, 0.0, 1.0)).xy;
 }
 '''
 
 
 _FRAGMENT = '''
-#version 100
-
-precision highp float;
-uniform sampler2D tex0_sampler;
-varying vec2 var_tex0_coord;
+ngl_in vec2 var_tex0_coord;
 
 void main()
 {
-    gl_FragColor = texture2D(tex0_sampler, var_tex0_coord);
+    ngl_out_color = ngl_tex2d(tex0, var_tex0_coord);
 }
 '''
 
@@ -267,38 +254,22 @@ from pynodegl_utils.misc import scene
 
 
 _VERTEX = '''
-#version 100
-
-precision highp float;
-attribute vec4 ngl_position;
-attribute vec2 ngl_uvcoord;
-uniform mat4 ngl_modelview_matrix;
-uniform mat4 ngl_projection_matrix;
-
-uniform mat4 tex0_coord_matrix;
-varying vec2 var_tex0_coord;
+ngl_out vec2 var_tex0_coord;
 
 void main()
 {
-    gl_Position = ngl_projection_matrix * ngl_modelview_matrix * ngl_position;
+    ngl_out_pos = ngl_projection_matrix * ngl_modelview_matrix * ngl_position;
     var_tex0_coord = (tex0_coord_matrix * vec4(ngl_uvcoord, 0.0, 1.0)).xy;
 }
 '''
 
 
 _FRAGMENT = '''
-#version 100
-
-precision highp float;
-uniform sampler2D tex0_sampler;
-uniform vec4 color;
-uniform float mixval;
-varying vec2 var_uvcoord;
-varying vec2 var_tex0_coord;
+ngl_in vec2 var_tex0_coord;
 void main()
 {
-    vec4 video = texture2D(tex0_sampler, var_tex0_coord);
-    gl_FragColor = mix(video, color, mixval);
+    vec4 video = ngl_tex2d(tex0, var_tex0_coord);
+    ngl_out_color = mix(video, color, mixval);
 }
 '''
 

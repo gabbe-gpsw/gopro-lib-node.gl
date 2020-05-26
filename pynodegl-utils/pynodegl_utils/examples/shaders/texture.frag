@@ -1,8 +1,5 @@
-#version 100
-precision mediump float;
-varying vec2 var_tex0_coord;
-uniform sampler2D tex0_sampler;
+ngl_in vec2 var_tex0_coord;
 void main()
 {
-    gl_FragColor = texture2D(tex0_sampler, var_tex0_coord);
+    ngl_out_color = ngl_texvideo(tex0, var_tex0_coord);
 }

@@ -297,7 +297,7 @@ def compute_animation(cfg):
 
     quad_buffer = ngl.BufferVec3(block=output_block, block_field=0)
     geometry = ngl.Geometry(quad_buffer, topology='triangle_fan')
-    program = ngl.Program(fragment=cfg.get_frag('color'))
+    program = ngl.Program(vertex=cfg.get_vert('color'), fragment=cfg.get_frag('color'))
     render = ngl.Render(geometry, program)
     render.update_fragment_resources(color=ngl.UniformVec4(value=COLORS['sgreen']))
 

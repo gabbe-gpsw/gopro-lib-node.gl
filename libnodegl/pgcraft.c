@@ -187,6 +187,10 @@ static int inject_texture_info(struct pgcraft *s, int stage, struct pgcraft_text
             };
             snprintf(pl_texture.name, sizeof(pl_texture.name), "%s", field->name);
 
+            int *next_bind = s->next_bindings[BIND_ID(stage, BINDING_TYPE_TEXTURE)];
+            if (next_bind)
+                pl_texture.binding = (*next_bind)++;
+
             if (field->type == NGLI_TYPE_IMAGE_2D) {
                 if (info->format == NGLI_TYPE_NONE) {
                     LOG(ERROR, "Texture2D.format must be set when accessing it as an image");
@@ -197,7 +201,13 @@ static int inject_texture_info(struct pgcraft *s, int stage, struct pgcraft_text
                     LOG(ERROR, "unsupported texture format");
                     return NGL_ERROR_UNSUPPORTED;
                 }
-                ngli_bstr_printf(b, "layout(%s) %s ", format, info->writable ? "writeonly" : "readonly");
+
+                ngli_bstr_printf(b, "layout(%s", format);
+                if (pl_texture.binding != -1)
+                    ngli_bstr_printf(b, "binding=%d", pl_texture.binding);
+                ngli_bstr_printf(b, ") %s ", info->writable ? "writeonly" : "readonly");
+            } else if (pl_texture.binding != -1) {
+                ngli_bstr_printf(b, "layout(binding=%d) ", pl_texture.binding);
             }
 
             const char *type = ngli_type_get_glsl_type(field->type);
@@ -253,14 +263,10 @@ static int inject_block(struct pgcraft *s, struct bstr *b, int stage,
     snprintf(pl_buffer.name, sizeof(pl_buffer.name), "%s_block", named_block->name);
 
     const char *layout = glsl_layout_str_map[block->layout];
-    /*
-     * TODO: this condition should use s->has_buffer_bindings and not check the
-     * block type. The reason we limit this to SSBO currently is because the
-     * program probing code forces a binding for the UBO, so it directly
-     * conflicts with what we do here.
-     */
-    if (block->type == NGLI_TYPE_STORAGE_BUFFER) {
-        pl_buffer.binding = s->next_ssbo_bind[named_block->stage]++;
+    const int bind_type = block->type == NGLI_TYPE_UNIFORM_BUFFER ? BINDING_TYPE_UBO : BINDING_TYPE_SSBO;
+    int *next_bind = s->next_bindings[BIND_ID(stage, bind_type)];
+    if (next_bind) {
+        pl_buffer.binding = (*next_bind)++;
         ngli_bstr_printf(b, "layout(%s,binding=%d)", layout, pl_buffer.binding);
     } else {
         ngli_bstr_printf(b, "layout(%s)", layout);
@@ -820,6 +826,29 @@ static void setup_glsl_info(struct pgcraft *s, const struct glcontext *gl)
     s->has_precision_qualifiers   = IS_GLSL_ES_MIN(130);
     s->has_modern_texture_picking = IS_GLSL_ES_MIN(300) || IS_GLSL_MIN(330);
     s->has_buffer_bindings        = IS_GL_ES_MIN(310) || IS_GL_MIN(420);
+
+    s->has_shared_bindings = 0;
+
+    if (s->has_buffer_bindings) {
+        if (s->has_shared_bindings)
+            for (int i = 0; i < NB_BINDINGS; i++)
+                s->next_bindings[i] = &s->bindings[0];
+        else
+            for (int i = 0; i < NB_BINDINGS; i++)
+                s->next_bindings[i] = &s->bindings[i];
+    }
+
+    /*
+     * FIXME: currently, program probing code forces a binding for the UBO, so
+     * it directly conflicts with the indexes we could set here.
+     */
+    s->next_bindings[BIND_ID(NGLI_PROGRAM_SHADER_VERT, BINDING_TYPE_UBO)] = NULL;
+    s->next_bindings[BIND_ID(NGLI_PROGRAM_SHADER_FRAG, BINDING_TYPE_UBO)] = NULL;
+    s->next_bindings[BIND_ID(NGLI_PROGRAM_SHADER_COMP, BINDING_TYPE_UBO)] = NULL;
+
+    s->next_bindings[BIND_ID(NGLI_PROGRAM_SHADER_VERT, BINDING_TYPE_TEXTURE)] = NULL;
+    s->next_bindings[BIND_ID(NGLI_PROGRAM_SHADER_FRAG, BINDING_TYPE_TEXTURE)] = NULL;
+    s->next_bindings[BIND_ID(NGLI_PROGRAM_SHADER_COMP, BINDING_TYPE_TEXTURE)] = NULL;
 }
 
 int ngli_pgcraft_init(struct pgcraft *s, struct ngl_ctx *ctx)

@@ -157,7 +157,7 @@ static int render_init(struct ngl_node *node)
         .frag_base = program->fragment,
         .vertex_resources = s->vertex_resources,
         .fragment_resources = s->fragment_resources,
-        .properties = program->properties : NULL,
+        .properties = program->properties,
         .attributes = s->attributes,
         .instance_attributes = s->instance_attributes,
         .nb_instances = s->nb_instances,

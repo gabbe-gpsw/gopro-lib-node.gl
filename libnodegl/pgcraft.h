@@ -127,11 +127,22 @@ struct pgcraft_params {
     int nb_frag_output;
 };
 
+
+enum {
+    BINDING_TYPE_UBO,
+    BINDING_TYPE_SSBO,
+    BINDING_TYPE_TEXTURE,
+    NB_BINDING_TYPE
+};
+
+#define NB_BINDINGS (NGLI_PROGRAM_SHADER_NB * NB_BINDING_TYPE)
+#define BIND_ID(stage, type) ((stage) * NB_BINDING_TYPE + (type))
+
 struct pgcraft {
     struct darray texture_infos; // pgcraft_texture_info
 
     /* private */
-    struct  ngl_ctx *ctx;
+    struct ngl_ctx *ctx;
     struct bstr *shaders[NGLI_PROGRAM_SHADER_NB];
 
     struct darray pipeline_uniforms;
@@ -146,8 +157,8 @@ struct pgcraft {
 
     struct program program;
 
-    //int next_ubo_bind[NGLI_PROGRAM_SHADER_NB];
-    int next_ssbo_bind[NGLI_PROGRAM_SHADER_NB];
+    int bindings[NB_BINDINGS];
+    int *next_bindings[NB_BINDINGS];
 
     /* GLSL info */
     int glsl_version;
@@ -157,6 +168,7 @@ struct pgcraft {
     int has_precision_qualifiers;
     int has_modern_texture_picking;
     int has_buffer_bindings;
+    int has_shared_bindings; // bindings shared across stages and types
 };
 
 int ngli_pgcraft_init(struct pgcraft *s, struct ngl_ctx *ctx);

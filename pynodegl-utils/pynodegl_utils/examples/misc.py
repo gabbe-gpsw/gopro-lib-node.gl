@@ -31,7 +31,8 @@ def lut3d(cfg, xsplit=.3, trilinear=True):
     video = ngl.Media(m0.filename)
     video_tex = ngl.Texture2D(data_src=video)
 
-    prog = ngl.Program(fragment=cfg.get_frag('lut3d'))
+    prog = ngl.Program(fragment=cfg.get_frag('lut3d'),
+                       vertex=cfg.get_vert('lut3d'))
 
     quad = ngl.Quad((-1, -1, 0), (2, 0, 0), (0, 2, 0))
     render = ngl.Render(quad, prog)
