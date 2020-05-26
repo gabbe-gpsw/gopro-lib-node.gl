@@ -222,7 +222,7 @@ static int inject_texture_info(struct pgcraft *s, int stage, struct pgcraft_text
 
                 ngli_bstr_printf(b, "layout(%s", format);
                 if (pl_texture.binding != -1)
-                    ngli_bstr_printf(b, "binding=%d", pl_texture.binding);
+                    ngli_bstr_printf(b, ", binding=%d", pl_texture.binding);
                 ngli_bstr_printf(b, ") %s ", info->writable ? "writeonly" : "readonly");
             } else if (pl_texture.binding != -1) {
                 ngli_bstr_printf(b, "layout(binding=%d) ", pl_texture.binding);
