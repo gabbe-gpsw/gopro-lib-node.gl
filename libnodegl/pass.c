@@ -262,6 +262,9 @@ static int check_attributes(struct pass *s, struct hmap *attributes, int per_ins
 static int register_attribute(struct pass *s, const char *name, struct ngl_node *attribute, int rate)
 {
     if (!attribute) {
+        /* HACK: WE CANT DO THAT FOR VULKAN */
+        return 0;
+
         /*
          * Inject dummy uniforms so that if there is no geometry the glsl code
          * using it still compiles. This code is horrible though, FIXME.
