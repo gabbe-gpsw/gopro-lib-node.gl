@@ -137,13 +137,32 @@ int ngli_texture_init(struct texture *s,
     if (ret < 0)
         return ret;
 
+    VkFormatFeatureFlags features =
+                    VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT |
+                    VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT |
+                    VK_FORMAT_FEATURE_BLIT_SRC_BIT |
+                    VK_FORMAT_FEATURE_BLIT_DST_BIT |
+                    VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT |
+                    VK_FORMAT_FEATURE_TRANSFER_SRC_BIT |
+                    VK_FORMAT_FEATURE_TRANSFER_DST_BIT;
+
     VkImageUsageFlagBits usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    if (is_depth_format(s->format))
+    if (is_depth_format(s->format)) {
         usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-    else
+        features |= VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT;
+    } else {
         usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
+        features |= VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    }
 
     VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
+
+    VkFormatProperties properties;
+    vkGetPhysicalDeviceFormatProperties(vk->physical_device, s->format, &properties);
+    LOG(ERROR, "features = 0x%x 0x%x", properties.optimalTilingFeatures, properties.linearTilingFeatures);
+    if (!(properties.optimalTilingFeatures & features))
+        tiling = VK_IMAGE_TILING_LINEAR;
+
     VkMemoryPropertyFlags memory_property_flags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     if (params->staging) {
         tiling = VK_IMAGE_TILING_LINEAR;
