@@ -105,6 +105,8 @@ struct vkcontext {
     VkRenderPass render_pass;
     VkRenderPass conservative_render_pass;
 
+    VkPhysicalDeviceFeatures dev_features;
+
     VkQueue graphic_queue;
     VkQueue present_queue;
 

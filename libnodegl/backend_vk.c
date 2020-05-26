@@ -543,6 +543,7 @@ static VkResult select_vulkan_physical_device(struct ngl_ctx *s, struct vkcontex
             vk->swapchain_support.nb_present_modes))) {
             LOG(DEBUG, "  -> device selected");
             vk->physical_device = phy_device;
+            vk->dev_features = dev_features;
             vk->queue_family_graphics_id = queue_family_graphics_id;
             vk->queue_family_present_id = queue_family_present_id;
         }
@@ -585,12 +586,32 @@ static VkResult create_vulkan_device(struct vkcontext *vk)
         queues_create_info[nb_queues++] = present_queue_create_info;
     }
 
+    VkPhysicalDeviceFeatures dev_features = {0};
+
+    /* TODO: Check mandatory features earlier (in select_[...]()) */
+
+#define ENABLE_FEATURE(feature)                                                  \
+    if (vk->dev_features.feature) {                                              \
+        dev_features.feature = VK_TRUE;                                          \
+    } else {                                                                     \
+        LOG(ERROR, "Mandatory feature " #feature " is not supported by device"); \
+        return -1;                                                               \
+    }                                                                            \
+
+    ENABLE_FEATURE(samplerAnisotropy)
+    ENABLE_FEATURE(vertexPipelineStoresAndAtomics)
+    ENABLE_FEATURE(fragmentStoresAndAtomics)
+    ENABLE_FEATURE(shaderStorageImageExtendedFormats)
+
+#undef ENABLE_FEATURE
+
     VkDeviceCreateInfo device_create_info = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         .pQueueCreateInfos = queues_create_info,
         .queueCreateInfoCount = nb_queues,
         .enabledExtensionCount = NGLI_ARRAY_NB(my_device_extension_names),
         .ppEnabledExtensionNames = my_device_extension_names,
+        .pEnabledFeatures = &dev_features,
     };
     VkResult ret = vkCreateDevice(vk->physical_device, &device_create_info, NULL, &vk->device);
     if (ret != VK_SUCCESS)
