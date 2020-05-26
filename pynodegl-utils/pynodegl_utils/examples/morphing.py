@@ -59,6 +59,7 @@ def square2circle(cfg, square_color=(0.9, 0.1, 0.3, 1.0), circle_color=(1.0, 1.0
     geom = ngl.Geometry(vertices)
     geom.set_topology('triangle_fan')
     p = ngl.Program(vertex=cfg.get_vert('color'), fragment=cfg.get_frag('color'))
+    # p.update_vert2frag_vars(var_uvcoord=ngl.IOVariable('vec2'))
     render = ngl.Render(geom, p)
     render.update_fragment_resources(color=ucolor)
     return render

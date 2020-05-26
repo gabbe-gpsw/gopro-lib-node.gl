@@ -21,6 +21,8 @@ def queued_medias(cfg, overlap_time=1., dim=3):
         t = ngl.Texture2D(data_src=m)
 
         program = ngl.Program(vertex=cfg.get_vert('texture'), fragment=cfg.get_frag('texture'))
+        program.update_vert2frag_vars(var_uvcoord=ngl.IOVariable('vec2'),
+                var_tex0_coord=ngl.IOVariable('vec2'))
         render = ngl.Render(q, program)
         render.set_label('render #%d' % video_id)
         render.update_fragment_resources(tex0=t)
@@ -58,6 +60,8 @@ def parallel_playback(cfg, fast=True, segment_time=2., constrained_timeranges=Fa
     t2 = ngl.Texture2D(data_src=m2, label='texture #2')
 
     program = ngl.Program(vertex=cfg.get_vert('texture'), fragment=cfg.get_frag('texture'))
+    program.update_vert2frag_vars(var_uvcoord=ngl.IOVariable('vec2'),
+            var_tex0_coord=ngl.IOVariable('vec2'))
     render1 = ngl.Render(q, program, label='render #1')
     render1.update_fragment_resources(tex0=t1)
     render2 = ngl.Render(q, program, label='render #2')
@@ -127,6 +131,8 @@ def simple_transition(cfg, transition_start=2, transition_duration=4):
     t2 = ngl.Texture2D(data_src=m2, label='texture #2')
 
     program = ngl.Program(vertex=cfg.get_vert('texture'), fragment=cfg.get_frag('texture'))
+    program.update_vert2frag_vars(var_uvcoord=ngl.IOVariable('vec2'),
+                var_tex0_coord=ngl.IOVariable('vec2'))
     render1 = ngl.Render(q, program, label='render #1')
     render1.update_fragment_resources(tex0=t1)
     render2 = ngl.Render(q, program, label='render #2')

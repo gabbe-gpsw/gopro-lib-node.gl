@@ -47,6 +47,8 @@ def playback_speed(cfg, speed=1.0):
     m = ngl.Media(m0.filename, time_anim=ngl.AnimatedTime(time_animkf))
     t = ngl.Texture2D(data_src=m)
     p = ngl.Program(vertex=cfg.get_vert('texture'), fragment=cfg.get_frag('texture'))
+    p.update_vert2frag_vars(var_tex0_coord=ngl.IOVariable('vec2'),
+                            var_uvcoord=ngl.IOVariable('vec2'))
     render = ngl.Render(q, p)
     render.update_fragment_resources(tex0=t)
     return render
@@ -89,6 +91,8 @@ def time_remapping(cfg):
     m.set_sxplayer_min_level('verbose')
     t = ngl.Texture2D(data_src=m)
     p = ngl.Program(vertex=cfg.get_vert('texture'), fragment=cfg.get_frag('texture'))
+    p.update_vert2frag_vars(var_tex0_coord=ngl.IOVariable('vec2'),
+                            var_uvcoord=ngl.IOVariable('vec2'))
     r = ngl.Render(q, p)
     r.update_fragment_resources(tex0=t)
 
