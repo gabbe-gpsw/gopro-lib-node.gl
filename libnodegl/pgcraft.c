@@ -767,6 +767,13 @@ static int craft_vert(struct pgcraft *s, const struct pgcraft_params *params)
     set_glsl_header(s, b);
 
     ngli_bstr_print(b, "#define ngl_out_pos gl_Position\n");
+#if defined VULKAN_BACKEND
+    ngli_bstr_print(b, "#define ngl_vertex_index gl_VertexIndex\n");
+    ngli_bstr_print(b, "#define ngl_instance_index gl_InstanceIndex\n");
+#else
+    ngli_bstr_print(b, "#define ngl_vertex_index gl_VertexID\n");
+    ngli_bstr_print(b, "#define ngl_instance_index gl_InstanceID\n");
+#endif
 
     int ret;
     if ((ret = inject_iovars(s, b, NGLI_PROGRAM_SHADER_VERT)) < 0 ||
