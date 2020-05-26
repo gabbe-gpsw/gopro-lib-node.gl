@@ -782,6 +782,7 @@ void ngli_pipeline_exec(struct pipeline *s)
         };
         vkCmdSetViewport(cmd_buf, 0, 1, &viewport);
 
+        vkCmdSetLineWidth(cmd_buf, 1.0f);
 
         VkRect2D scissor;
         if (graphics->state.scissor_test) {
