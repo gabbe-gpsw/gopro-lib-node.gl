@@ -760,7 +760,6 @@ void ngli_pipeline_exec(struct pipeline *s)
     struct texture_pair *pairs = ngli_darray_data(&s->texture_descs);
     for (int i = 0; i < ngli_darray_count(&s->texture_descs); i++) {
         struct pipeline_texture *texture = &pairs[i].texture;
-        LOG(ERROR, "index=%d, ptr=%p", i, texture->texture);
         if (!texture->texture)
             continue;
         ngli_texture_vk_transition_layout(texture->texture, VK_IMAGE_LAYOUT_GENERAL);
