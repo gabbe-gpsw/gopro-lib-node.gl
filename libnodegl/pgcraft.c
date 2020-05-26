@@ -679,6 +679,11 @@ static int craft_vert(struct pgcraft *s, const struct pgcraft_params *params)
     set_glsl_header(s, b);
 
     ngli_bstr_print(b, "#define ngl_out_pos gl_Position\n");
+#if defined VULKAN_BACKEND
+    ngli_bstr_print(b, "#define ngl_vertex_index gl_VertexIndex\n");
+#else
+    ngli_bstr_print(b, "#define ngl_vertex_index gl_VertexID\n");
+#endif
 
     inject_vert2frags(s, b, NGLI_PROGRAM_SHADER_VERT);
     inject_uniforms(s, b, NGLI_PROGRAM_SHADER_VERT, params);
