@@ -251,7 +251,7 @@ static int pipeline_graphics_init(struct pipeline *s, const struct pipeline_para
         .polygonMode = VK_POLYGON_MODE_FILL,
         .lineWidth = 1.f,
         .cullMode = get_vk_cull_mode(state->cull_face_mode),
-        .frontFace = VK_FRONT_FACE_CLOCKWISE,
+        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
     };
 
     /* Multisampling */
