@@ -851,7 +851,7 @@ static void probe_texture_info_elems(const struct pgcraft *s, struct pgcraft_tex
         else if (ngli_type_is_sampler_or_image(field->type))
             field->index = get_texture_index(s, field->name);
         else
-            field->index = get_uniform_index(s, field->name);
+            field->index = s->use_ublock ? get_ublock_index(s, field->name, field->stage): get_uniform_index(s, field->name);
     }
 }
 
