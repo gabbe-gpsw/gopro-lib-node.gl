@@ -60,7 +60,7 @@ struct hud_priv {
     double last_refresh_time;
     int need_refresh;
 
-    struct pgcraft crafter;
+    struct pgcraft *crafter;
     struct texture texture;
     struct buffer coords;
     struct pipeline pipeline;
@@ -1337,11 +1337,11 @@ static int hud_init(struct ngl_node *node)
         .nb_vert2frag_vars = NGLI_ARRAY_NB(vert2frag_vars),
     };
 
-    ret = ngli_pgcraft_init(&s->crafter, ctx);
-    if (ret < 0)
-        return ret;
+    s->crafter = ngli_pgcraft_create(ctx);
+    if (!s->crafter)
+        return NGL_ERROR_MEMORY;
 
-    ret = ngli_pgcraft_craft(&s->crafter, &pipeline_params, &crafter_params);
+    ret = ngli_pgcraft_craft(s->crafter, &pipeline_params, &crafter_params);
     if (ret < 0)
         return ret;
 
@@ -1349,8 +1349,8 @@ static int hud_init(struct ngl_node *node)
     if (ret < 0)
         return ret;
 
-    s->modelview_matrix_index = ngli_pgcraft_get_uniform_index(&s->crafter, "modelview_matrix", NGLI_PROGRAM_SHADER_VERT);
-    s->projection_matrix_index = ngli_pgcraft_get_uniform_index(&s->crafter, "projection_matrix", NGLI_PROGRAM_SHADER_VERT);
+    s->modelview_matrix_index = ngli_pgcraft_get_uniform_index(s->crafter, "modelview_matrix", NGLI_PROGRAM_SHADER_VERT);
+    s->projection_matrix_index = ngli_pgcraft_get_uniform_index(s->crafter, "projection_matrix", NGLI_PROGRAM_SHADER_VERT);
 
     return 0;
 }
@@ -1402,7 +1402,7 @@ static void hud_uninit(struct ngl_node *node)
     struct hud_priv *s = node->priv_data;
 
     ngli_pipeline_reset(&s->pipeline);
-    ngli_pgcraft_reset(&s->crafter);
+    ngli_pgcraft_freep(&s->crafter);
     ngli_texture_reset(&s->texture);
     ngli_buffer_reset(&s->coords);
 

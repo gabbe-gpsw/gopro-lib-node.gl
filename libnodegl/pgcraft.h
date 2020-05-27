@@ -191,7 +191,7 @@ struct pgcraft {
     int *next_out_location; // last stage only
 };
 
-int ngli_pgcraft_init(struct pgcraft *s, struct ngl_ctx *ctx);
+struct pgcraft *ngli_pgcraft_create(struct ngl_ctx *ctx);
 
 int ngli_pgcraft_craft(struct pgcraft *s,
                        struct pipeline_params *dst,
@@ -199,6 +199,6 @@ int ngli_pgcraft_craft(struct pgcraft *s,
 
 int ngli_pgcraft_get_uniform_index(const struct pgcraft *s, const char *name, int stage);
 
-void ngli_pgcraft_reset(struct pgcraft *s);
+void ngli_pgcraft_freep(struct pgcraft **sp);
 
 #endif

@@ -146,11 +146,11 @@ int ngli_hwconv_init(struct hwconv *hwconv, struct ngl_ctx *ctx,
         .nb_vert2frag_vars = NGLI_ARRAY_NB(vert2frag_vars),
     };
 
-    ret = ngli_pgcraft_init(&hwconv->crafter, ctx);
-    if (ret < 0)
-        return ret;
+    hwconv->crafter = ngli_pgcraft_create(ctx);
+    if (hwconv->crafter)
+        return NGL_ERROR_MEMORY;
 
-    ret = ngli_pgcraft_craft(&hwconv->crafter, &pipeline_params, &crafter_params);
+    ret = ngli_pgcraft_craft(hwconv->crafter, &pipeline_params, &crafter_params);
     if (ret < 0)
         return ret;
 
@@ -226,7 +226,7 @@ void ngli_hwconv_reset(struct hwconv *hwconv)
         return;
 
     ngli_pipeline_reset(&hwconv->pipeline);
-    ngli_pgcraft_reset(&hwconv->crafter);
+    ngli_pgcraft_freep(&hwconv->crafter);
     ngli_buffer_reset(&hwconv->vertices);
     ngli_rendertarget_reset(&hwconv->rt);
 

@@ -25,6 +25,7 @@
 #include "format.h"
 #include "hmap.h"
 #include "log.h"
+#include "memory.h"
 #include "nodes.h"
 #include "pgcraft.h"
 #include "type.h"
@@ -994,9 +995,12 @@ static void setup_glsl_info(struct pgcraft *s, const struct glcontext *gl)
 }
 #endif
 
-int ngli_pgcraft_init(struct pgcraft *s, struct ngl_ctx *ctx)
+struct pgcraft *ngli_pgcraft_create(struct ngl_ctx *ctx)
 {
-    memset(s, 0, sizeof(*s));
+    struct pgcraft *s = ngli_calloc(1, sizeof(*s));
+    if (!s)
+        return NULL;
+
 
 #ifdef VULKAN_BACKEND
     setup_glsl_info(s, ctx->vkcontext);
@@ -1021,7 +1025,7 @@ int ngli_pgcraft_init(struct pgcraft *s, struct ngl_ctx *ctx)
     ngli_darray_init(&s->filtered_pipeline_buffers,    sizeof(struct pipeline_buffer),    0);
     ngli_darray_init(&s->filtered_pipeline_attributes, sizeof(struct pipeline_attribute), 0);
 
-    return 0;
+    return s;
 }
 
 static int get_program_compute(struct pgcraft *s, const struct pgcraft_params *params)
@@ -1110,9 +1114,10 @@ int ngli_pgcraft_get_uniform_index(const struct pgcraft *s, const char *name, in
     return s->use_ublock ? get_ublock_index(s, name, stage) : get_uniform_index(s, name);
 }
 
-void ngli_pgcraft_reset(struct pgcraft *s)
+void ngli_pgcraft_freep(struct pgcraft **sp)
 {
-    if (!s->ctx)
+    struct pgcraft *s = *sp;
+    if (!s)
         return;
 
     ngli_darray_reset(&s->texture_infos);
@@ -1134,5 +1139,5 @@ void ngli_pgcraft_reset(struct pgcraft *s)
     ngli_darray_reset(&s->pipeline_buffers);
     ngli_darray_reset(&s->pipeline_attributes);
 
-    memset(s, 0, sizeof(*s));
+    *sp = NULL;
 }

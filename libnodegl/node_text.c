@@ -36,7 +36,7 @@
 #include "utils.h"
 
 struct pipeline_desc {
-    struct pgcraft crafter;
+    struct pgcraft *crafter;
     struct pipeline pipeline;
     int modelview_matrix_index;
     int projection_matrix_index;
@@ -332,11 +332,11 @@ static int text_prepare(struct ngl_node *node)
 
     memset(desc, 0, sizeof(*desc));
 
-    int ret = ngli_pgcraft_init(&desc->crafter, ctx);
-    if (ret < 0)
-        return ret;
+    desc->crafter = ngli_pgcraft_create(ctx);
+    if (!desc->crafter)
+        return NGL_ERROR_MEMORY;
 
-    ret = ngli_pgcraft_craft(&desc->crafter, &pipeline_params, &crafter_params);
+    int ret = ngli_pgcraft_craft(desc->crafter, &pipeline_params, &crafter_params);
     if (ret < 0)
         return ret;
 
@@ -344,8 +344,8 @@ static int text_prepare(struct ngl_node *node)
     if (ret < 0)
         return ret;
 
-    desc->modelview_matrix_index = ngli_pgcraft_get_uniform_index(&desc->crafter, "modelview_matrix", NGLI_PROGRAM_SHADER_VERT);
-    desc->projection_matrix_index = ngli_pgcraft_get_uniform_index(&desc->crafter, "projection_matrix", NGLI_PROGRAM_SHADER_VERT);
+    desc->modelview_matrix_index = ngli_pgcraft_get_uniform_index(desc->crafter, "modelview_matrix", NGLI_PROGRAM_SHADER_VERT);
+    desc->projection_matrix_index = ngli_pgcraft_get_uniform_index(desc->crafter, "projection_matrix", NGLI_PROGRAM_SHADER_VERT);
 
     return 0;
 }
@@ -375,7 +375,7 @@ static void text_uninit(struct ngl_node *node)
     for (int i = 0; i < nb_descs; i++) {
         struct pipeline_desc *desc = &descs[i];
         ngli_pipeline_reset(&desc->pipeline);
-        ngli_pgcraft_reset(&desc->crafter);
+        ngli_pgcraft_freep(&desc->crafter);
     }
     ngli_darray_reset(&s->pipeline_descs);
     ngli_texture_reset(&s->texture);

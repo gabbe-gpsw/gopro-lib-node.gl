@@ -46,7 +46,7 @@
 #include "utils.h"
 
 struct pipeline_desc {
-    struct pgcraft crafter;
+    struct pgcraft *crafter;
     struct pipeline pipeline;
     int modelview_matrix_index;
     int projection_matrix_index;
@@ -484,12 +484,11 @@ int ngli_pass_prepare(struct pass *s)
 
     memset(desc, 0, sizeof(*desc));
 
-    struct pgcraft *crafter = &desc->crafter;
-    int ret = ngli_pgcraft_init(crafter, ctx);
-    if (ret < 0)
-        return ret;
+    desc->crafter = ngli_pgcraft_create(ctx);
+    if (!desc->crafter)
+        return NGL_ERROR_MEMORY;
 
-    ret = ngli_pgcraft_craft(crafter, &pipeline_params, &crafter_params);
+    int ret = ngli_pgcraft_craft(desc->crafter, &pipeline_params, &crafter_params);
     if (ret < 0)
         return ret;
 
@@ -498,9 +497,9 @@ int ngli_pass_prepare(struct pass *s)
     if (ret < 0)
         return ret;
 
-    desc->modelview_matrix_index = ngli_pgcraft_get_uniform_index(crafter, "ngl_modelview_matrix", NGLI_PROGRAM_SHADER_VERT);
-    desc->projection_matrix_index = ngli_pgcraft_get_uniform_index(crafter, "ngl_projection_matrix", NGLI_PROGRAM_SHADER_VERT);
-    desc->normal_matrix_index = ngli_pgcraft_get_uniform_index(crafter, "ngl_normal_matrix", NGLI_PROGRAM_SHADER_VERT);
+    desc->modelview_matrix_index = ngli_pgcraft_get_uniform_index(desc->crafter, "ngl_modelview_matrix", NGLI_PROGRAM_SHADER_VERT);
+    desc->projection_matrix_index = ngli_pgcraft_get_uniform_index(desc->crafter, "ngl_projection_matrix", NGLI_PROGRAM_SHADER_VERT);
+    desc->normal_matrix_index = ngli_pgcraft_get_uniform_index(desc->crafter, "ngl_normal_matrix", NGLI_PROGRAM_SHADER_VERT);
     return 0;
 }
 
@@ -568,7 +567,7 @@ void ngli_pass_uninit(struct pass *s)
     for (int i = 0; i < nb_descs; i++) {
         struct pipeline_desc *desc = &descs[i];
         ngli_pipeline_reset(&desc->pipeline);
-        ngli_pgcraft_reset(&desc->crafter);
+        ngli_pgcraft_freep(&desc->crafter);
     }
     ngli_darray_reset(&s->pipeline_descs);
 
@@ -652,7 +651,7 @@ int ngli_pass_exec(struct pass *s)
         ngli_pipeline_update_uniform(pipeline, desc->normal_matrix_index, normal_matrix);
     }
 
-    struct darray *texture_infos_array = &desc->crafter.texture_infos;
+    struct darray *texture_infos_array = &desc->crafter->texture_infos;
     struct pgcraft_texture_info *texture_infos = ngli_darray_data(texture_infos_array);
     for (int i = 0; i < ngli_darray_count(texture_infos_array); i++) {
         struct pgcraft_texture_info *info = &texture_infos[i];
