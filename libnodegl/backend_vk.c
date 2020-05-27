@@ -599,7 +599,8 @@ static VkResult create_vulkan_device(struct vkcontext *vk)
     }                                                                            \
 
     ENABLE_FEATURE(samplerAnisotropy)
-    ENABLE_FEATURE(vertexPipelineStoresAndAtomics)
+    //Not supported on Intel Haswell GPU
+    //ENABLE_FEATURE(vertexPipelineStoresAndAtomics)
     ENABLE_FEATURE(fragmentStoresAndAtomics)
     ENABLE_FEATURE(shaderStorageImageExtendedFormats)
 
