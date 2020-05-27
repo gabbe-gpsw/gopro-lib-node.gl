@@ -698,6 +698,9 @@ int ngli_pipeline_update_uniform(struct pipeline *s, int index, const void *valu
     const struct block_field *field_info = ngli_darray_data(&block->fields);
     const struct block_field *fi = &field_info[field_index];
     uint8_t *dst = s->udata[stage] + fi->offset;
+
+    LOG(ERROR, "name=%s", fi->name);
+
     memcpy(dst, value, fi->size);
     return 0;
 }
