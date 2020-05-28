@@ -134,7 +134,7 @@ class SceneCfg:
         'aspect_ratio': (16, 9),
         'duration': 30.0,
         'framerate': (60, 1),
-        'backend': 'gl',
+        'backend': 'vk',
         'samples': 0,
         'system': platform.system(),
         'files': [],
@@ -199,5 +199,6 @@ def get_backend(backend):
     backend_map = {
         'gl': ngl.BACKEND_OPENGL,
         'gles': ngl.BACKEND_OPENGLES,
+        'vk': ngl.BACKEND_VULKAN,
     }
     return backend_map[backend]

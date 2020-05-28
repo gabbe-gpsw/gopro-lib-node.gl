@@ -142,7 +142,7 @@ static int media_init(struct ngl_node *node)
         return 0;
     }
 
-#if defined(TARGET_ANDROID)
+#if defined(TARGET_ANDROID) && !defined(VULKAN_BACKEND)
     struct ngl_ctx *ctx = node->ctx;
 
     struct texture_params params = {
@@ -266,7 +266,10 @@ static void media_uninit(struct ngl_node *node)
     struct media_priv *s = node->priv_data;
     sxplayer_free(&s->player);
 
-#if defined(TARGET_ANDROID)
+#if defined(TARGET_ANDROID) && !defined(VULKAN_BACKEND)
+    struct ngl_ctx *ctx = node->ctx;
+    struct glcontext *gl = ctx->glcontext;
+
     ngli_android_surface_free(&s->android_surface);
     ngli_android_handlerthread_free(&s->android_handlerthread);
     ngli_texture_reset(&s->android_texture);
