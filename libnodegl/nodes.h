@@ -354,6 +354,10 @@ struct identity_priv {
     NGLI_ALIGNED_MAT(modelview_matrix);
 };
 
+struct iovariable_priv {
+    int type;
+};
+
 struct resourceprops_priv {
     int precision;
     int as_image;

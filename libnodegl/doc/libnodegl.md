@@ -357,6 +357,16 @@ Parameter | Ctor. | Live-chg. | Type | Description | Default
 **Source**: [node_identity.c](/libnodegl/node_identity.c)
 
 
+## IOVariable
+
+Parameter | Ctor. | Live-chg. | Type | Description | Default
+--------- | :---: | :-------: | ---- | ----------- | :-----:
+`type` | ✓ |  | [`type`](#type-choices) | type qualifier for the shader | `none`
+
+
+**Source**: [node_iovariable.c](/libnodegl/node_iovariable.c)
+
+
 ## Media
 
 Parameter | Ctor. | Live-chg. | Type | Description | Default
@@ -1321,6 +1331,27 @@ Constant | Description
 -------- | -----------
 `front` | cull front-facing facets
 `back` | cull back-facing facets
+
+## type choices
+
+Constant | Description
+-------- | -----------
+`none` | none
+`int` | integer
+`ivec2` | 2 integers
+`ivec3` | 3 integers
+`ivec4` | 4 integers
+`uint` | unsigned integer
+`uivec2` | 2 unsigned integers
+`uivec3` | 3 unsigned integers
+`uivec4` | 4 unsigned integers
+`float` | float
+`vec2` | 2 floats
+`vec3` | 3 floats
+`vec4` | 4 floats
+`mat3` | 3x3 floats
+`mat4` | 4x4 floats
+`bool` | boolean
 
 ## sxplayer_log_level choices
 

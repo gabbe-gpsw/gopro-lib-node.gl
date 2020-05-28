@@ -262,6 +262,10 @@
 
 - Identity:
 
+- IOVariable:
+    constructors:
+        - [type, select]
+
 - Media:
     constructors:
         - [filename, string]
