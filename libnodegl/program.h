@@ -22,15 +22,28 @@
 #ifndef PROGRAM_H
 #define PROGRAM_H
 
+#include "darray.h"
 #include "glincludes.h"
 #include "hmap.h"
+#include <shaderc/shaderc.h>
+#include <vulkan/vulkan.h>
 
 #define MAX_ID_LEN 128
 
 struct program_variable_info {
     int binding;
     int location;
+    int stages;
+    int access;
 };
+
+#ifdef VULKAN_BACKEND
+struct program_shader {
+    VkShaderModule vkmodule;
+    struct spirv_probe *probe;
+    shaderc_compilation_result_t result;
+};
+#endif
 
 enum {
     NGLI_PROGRAM_SHADER_VERT,
@@ -41,11 +54,17 @@ enum {
 
 struct program {
     struct ngl_ctx *ctx;
+
+#ifdef VULKAN_BACKEND
+    struct program_shader shaders[NGLI_PROGRAM_SHADER_NB];
+#endif
     struct hmap *uniforms;
     struct hmap *attributes;
     struct hmap *buffer_blocks;
 
+#ifndef VULKAN_BACKEND
     GLuint id;
+#endif
 };
 
 int ngli_program_init(struct program *s, struct ngl_ctx *ctx, const char *vertex, const char *fragment, const char *compute);

@@ -125,3 +125,7 @@ int ngli_gctx_get_prefered_depth_stencil_format(struct ngl_ctx *s)
 {
     return NGLI_FORMAT_D24_UNORM_S8_UINT;
 }
+
+void ngli_gctx_flush(struct ngl_ctx *s)
+{
+}

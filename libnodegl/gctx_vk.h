@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 GoPro Inc.
+ * Copyright 2020 GoPro Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -19,26 +19,12 @@
  * under the License.
  */
 
-#ifndef TOPOLOGY_H
-#define TOPOLOGY_H
+#ifndef GCTX_VK_H
+#define GCTX_VK_H
 
-#include "glincludes.h"
-#include "glcontext.h"
+struct ngl_ctx;
 
-enum {
-    NGLI_PRIMITIVE_TOPOLOGY_POINT_LIST,
-    NGLI_PRIMITIVE_TOPOLOGY_LINE_LIST,
-    NGLI_PRIMITIVE_TOPOLOGY_LINE_STRIP,
-    NGLI_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-    NGLI_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
-    NGLI_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN,
-    NGLI_PRIMITIVE_TOPOLOGY_NB
-};
-
-#ifndef VULKAN_BACKEND
-GLenum ngli_topology_get_gl_topology(int topology);
-#else
-VkPrimitiveTopology ngli_topology_get_vk_topology(int topology);
-#endif
+void ngli_gctx_vk_commit_render_pass(struct ngl_ctx *s);
+void ngli_gctx_vk_end_render_pass(struct ngl_ctx *s);
 
 #endif

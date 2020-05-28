@@ -24,7 +24,7 @@
 
 #include "nodes.h"
 
-void ngli_gctx_set_rendertarget(struct ngl_ctx *s, struct rendertarget *rt);
+void ngli_gctx_set_rendertarget(struct ngl_ctx *s, struct rendertarget *rt, int conservative);
 struct rendertarget *ngli_gctx_get_rendertarget(struct ngl_ctx *s);
 
 void ngli_gctx_set_viewport(struct ngl_ctx *s, const int *viewport);
@@ -41,5 +41,7 @@ void ngli_gctx_invalidate_depth_stencil(struct ngl_ctx *s);
 
 int ngli_gctx_get_prefered_depth_format(struct ngl_ctx *s);
 int ngli_gctx_get_prefered_depth_stencil_format(struct ngl_ctx *s);
+
+void ngli_gctx_flush(struct ngl_ctx *s);
 
 #endif
