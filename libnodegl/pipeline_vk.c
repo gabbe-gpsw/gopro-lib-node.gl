@@ -803,8 +803,9 @@ void ngli_pipeline_exec(struct pipeline *s)
 
         VkRect2D scissor;
         if (graphics->state.scissor_test) {
+            VkExtent2D extent = ctx->rendertarget ? vk->cur_render_area : vk->extent;
             scissor.offset.x = ctx->scissor[0];
-            scissor.offset.y = ctx->scissor[1];
+            scissor.offset.y = NGLI_MAX(extent.height - ctx->scissor[1] - ctx->scissor[3], 0);
             scissor.extent.width = ctx->scissor[2];
             scissor.extent.height = ctx->scissor[3];
         } else {
