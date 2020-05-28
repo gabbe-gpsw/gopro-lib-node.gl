@@ -998,6 +998,35 @@ static int alloc_shader(struct pgcraft *s, int stage)
     return 0;
 }
 
+#ifdef VULKAN_BACKEND
+static void setup_glsl_info(struct pgcraft *s, const struct vkcontext *vk)
+{
+    s->rg = "rg";
+    s->glsl_version = 450;
+    s->glsl_version_suffix = "";
+
+    // XXX
+    s->has_in_out_qualifiers = 1;
+    s->has_precision_qualifiers = 0;
+    s->has_modern_texture_picking = 1;
+    s->has_buffer_bindings = 1;
+
+    s->use_ublock = 1;
+    s->has_shared_bindings = 1;
+
+    if (s->has_buffer_bindings) {
+        if (s->has_shared_bindings)
+            for (int i = 0; i < NB_BINDINGS; i++)
+                s->next_bindings[i] = &s->bindings[0];
+        else
+            for (int i = 0; i < NB_BINDINGS; i++)
+                s->next_bindings[i] = &s->bindings[i];
+    }
+
+    s->next_in_location = s->in_locations;
+    s->next_out_location = s->out_locations;
+}
+#else
 #define IS_GL_ES_MIN(min)   (gl->backend == NGL_BACKEND_OPENGLES && gl->version >= (min))
 #define IS_GL_MIN(min)      (gl->backend == NGL_BACKEND_OPENGL   && gl->version >= (min))
 #define IS_GLSL_ES_MIN(min) (gl->backend == NGL_BACKEND_OPENGLES && s->glsl_version >= (min))
@@ -1052,7 +1081,14 @@ static void setup_glsl_info(struct pgcraft *s, const struct glcontext *gl)
     s->next_bindings[BIND_ID(NGLI_PROGRAM_SHADER_VERT, BINDING_TYPE_TEXTURE)] = NULL;
     s->next_bindings[BIND_ID(NGLI_PROGRAM_SHADER_FRAG, BINDING_TYPE_TEXTURE)] = NULL;
     s->next_bindings[BIND_ID(NGLI_PROGRAM_SHADER_COMP, BINDING_TYPE_TEXTURE)] = NULL;
+
+    s->use_ublock = 0;
+
+    // XXX: should we add in/out location for gl when available?
+    s->next_in_location = NULL;
+    s->next_out_location = NULL;
 }
+#endif
 
 struct pgcraft *ngli_pgcraft_create(struct ngl_ctx *ctx)
 {
@@ -1061,7 +1097,11 @@ struct pgcraft *ngli_pgcraft_create(struct ngl_ctx *ctx)
         return NULL;
 
 
+#ifdef VULKAN_BACKEND
+    setup_glsl_info(s, ctx->vkcontext);
+#else
     setup_glsl_info(s, ctx->glcontext);
+#endif
 
     if (s->use_ublock)
         ngli_block_init(s->ublock, NGLI_BLOCK_LAYOUT_STD140);

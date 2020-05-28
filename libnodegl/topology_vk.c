@@ -19,26 +19,19 @@
  * under the License.
  */
 
-#ifndef TOPOLOGY_H
-#define TOPOLOGY_H
+#include <vulkan/vulkan.h>
+#include "topology.h"
 
-#include "glincludes.h"
-#include "glcontext.h"
-
-enum {
-    NGLI_PRIMITIVE_TOPOLOGY_POINT_LIST,
-    NGLI_PRIMITIVE_TOPOLOGY_LINE_LIST,
-    NGLI_PRIMITIVE_TOPOLOGY_LINE_STRIP,
-    NGLI_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-    NGLI_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
-    NGLI_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN,
-    NGLI_PRIMITIVE_TOPOLOGY_NB
+static const VkPrimitiveTopology vk_primitive_topology_map[NGLI_PRIMITIVE_TOPOLOGY_NB] = {
+    [NGLI_PRIMITIVE_TOPOLOGY_POINT_LIST]     = VK_PRIMITIVE_TOPOLOGY_POINT_LIST,
+    [NGLI_PRIMITIVE_TOPOLOGY_LINE_LIST]      = VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
+    [NGLI_PRIMITIVE_TOPOLOGY_LINE_STRIP]     = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP,
+    [NGLI_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST]  = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+    [NGLI_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP] = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
+    [NGLI_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN]   = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN,
 };
 
-#ifndef VULKAN_BACKEND
-GLenum ngli_topology_get_gl_topology(int topology);
-#else
-VkPrimitiveTopology ngli_topology_get_vk_topology(int topology);
-#endif
-
-#endif
+VkPrimitiveTopology ngli_topology_get_vk_topology(int topology)
+{
+    return vk_primitive_topology_map[topology];
+}

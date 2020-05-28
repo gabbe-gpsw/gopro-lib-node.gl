@@ -47,6 +47,7 @@ static const int strides_map[NGLI_BLOCK_NB_LAYOUTS][NGLI_TYPE_NB] = {
         [NGLI_TYPE_VEC2]   = sizeof(float) * 4,
         [NGLI_TYPE_VEC3]   = sizeof(float) * 4,
         [NGLI_TYPE_VEC4]   = sizeof(float) * 4,
+        [NGLI_TYPE_MAT3]   = sizeof(float) * 4 * 3, // XXX check
         [NGLI_TYPE_MAT4]   = sizeof(float) * 4 * 4,
     },
     [NGLI_BLOCK_LAYOUT_STD430] = {
@@ -62,6 +63,7 @@ static const int strides_map[NGLI_BLOCK_NB_LAYOUTS][NGLI_TYPE_NB] = {
         [NGLI_TYPE_VEC2]   = sizeof(float) * 2,
         [NGLI_TYPE_VEC3]   = sizeof(float) * 4,
         [NGLI_TYPE_VEC4]   = sizeof(float) * 4,
+        [NGLI_TYPE_MAT3]   = sizeof(float) * 4 * 3, // XXX check
         [NGLI_TYPE_MAT4]   = sizeof(float) * 4 * 4,
     },
 };
@@ -79,6 +81,7 @@ static const int sizes_map[NGLI_TYPE_NB] = {
     [NGLI_TYPE_VEC2]   = sizeof(float) * 2,
     [NGLI_TYPE_VEC3]   = sizeof(float) * 3,
     [NGLI_TYPE_VEC4]   = sizeof(float) * 4,
+    [NGLI_TYPE_MAT3]   = sizeof(float) * 4 * 3, // XXX check
     [NGLI_TYPE_MAT4]   = sizeof(float) * 4 * 4,
 };
 
@@ -95,6 +98,7 @@ static const int aligns_map[NGLI_TYPE_NB] = {
     [NGLI_TYPE_VEC2]   = sizeof(float) * 2,
     [NGLI_TYPE_VEC3]   = sizeof(float) * 4,
     [NGLI_TYPE_VEC4]   = sizeof(float) * 4,
+    [NGLI_TYPE_MAT3]   = sizeof(float) * 4, // XXX check
     [NGLI_TYPE_MAT4]   = sizeof(float) * 4,
 };
 

@@ -50,9 +50,13 @@
 #include "animation.h"
 #include "block.h"
 #include "drawutils.h"
+
+#ifdef VULKAN_BACKEND
+#include "vkcontext.h"
+#else
 #include "glincludes.h"
-#include "glcontext.h"
 #include "glstate.h"
+#endif
 #include "graphicstate.h"
 #include "hmap.h"
 #include "hwconv.h"
@@ -69,6 +73,7 @@
 #include "rnode.h"
 #include "texture.h"
 
+struct glcontext;
 struct node_class;
 
 typedef int (*cmd_func_type)(struct ngl_ctx *s, void *arg);
@@ -82,8 +87,12 @@ struct ngl_ctx {
     pthread_t worker_tid;
 
     /* Worker-only fields */
+#if defined(VULKAN_BACKEND)
+    struct vkcontext *vkcontext;
+#else
     struct glcontext *glcontext;
     struct glstate glstate;
+#endif
     struct graphicstate graphicstate;
     struct rendertarget *rendertarget;
     struct rnode rnode;
@@ -337,10 +346,13 @@ struct media_priv {
     struct sxplayer_ctx *player;
     struct sxplayer_frame *frame;
 
+#ifdef VULKAN_BACKEND
+#else
 #if defined(TARGET_ANDROID)
     struct texture android_texture;
     struct android_surface *android_surface;
     struct android_handlerthread *android_handlerthread;
+#endif
 #endif
 };
 

@@ -22,8 +22,12 @@
 #ifndef FORMAT_H
 #define FORMAT_H
 
+#if defined(VULKAN_BACKEND)
+#include "vkcontext.h"
+#else
 #include "glcontext.h"
 #include "glincludes.h"
+#endif
 
 enum {
     NGLI_FORMAT_UNDEFINED,
@@ -95,6 +99,9 @@ int ngli_format_get_bytes_per_pixel(int format);
 
 int ngli_format_get_nb_comp(int format);
 
+#ifdef VULKAN_BACKEND
+int ngli_format_get_vk_format(struct vkcontext *vk, int data_format, VkFormat *format);
+#else
 int ngli_format_get_gl_texture_format(struct glcontext *gl,
                                       int data_format,
                                       GLint *formatp,
@@ -105,5 +112,6 @@ int ngli_format_get_gl_renderbuffer_format(struct glcontext *gl,
                                            int data_format,
                                            GLint *formatp);
 
+#endif
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 GoPro Inc.
+ * Copyright 2020 GoPro Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -19,26 +19,21 @@
  * under the License.
  */
 
-#ifndef TOPOLOGY_H
-#define TOPOLOGY_H
+#ifndef TEXTURE_VK_H
+#define TEXTURE_VK_H
 
-#include "glincludes.h"
-#include "glcontext.h"
+#include <vulkan/vulkan.h>
 
-enum {
-    NGLI_PRIMITIVE_TOPOLOGY_POINT_LIST,
-    NGLI_PRIMITIVE_TOPOLOGY_LINE_LIST,
-    NGLI_PRIMITIVE_TOPOLOGY_LINE_STRIP,
-    NGLI_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-    NGLI_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
-    NGLI_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN,
-    NGLI_PRIMITIVE_TOPOLOGY_NB
-};
+struct ngl_ctx;
+struct vkcontext;
+struct texture;
 
-#ifndef VULKAN_BACKEND
-GLenum ngli_topology_get_gl_topology(int topology);
-#else
-VkPrimitiveTopology ngli_topology_get_vk_topology(int topology);
-#endif
+int ngli_texture_vk_transition_layout(struct texture *s, VkImageLayout layout);
+void ngli_vk_transition_image_layout(struct vkcontext *vk,
+                                     VkCommandBuffer command_buffer,
+                                     VkImage image,
+                                     VkImageLayout old_layout,
+                                     VkImageLayout new_layout,
+                                     const VkImageSubresourceRange *subres_range);
 
 #endif
