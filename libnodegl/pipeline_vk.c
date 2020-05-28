@@ -183,6 +183,7 @@ static VkStencilOp get_vk_stencil_op(int stencil_op)
 }
 
 static const VkCullModeFlags vk_cull_mode_map[NGLI_CULL_MODE_NB] = {
+    [NGLI_CULL_MODE_NONE]           = VK_CULL_MODE_NONE,
     [NGLI_CULL_MODE_FRONT_BIT]      = VK_CULL_MODE_FRONT_BIT,
     [NGLI_CULL_MODE_BACK_BIT]       = VK_CULL_MODE_BACK_BIT,
     [NGLI_CULL_MODE_FRONT_AND_BACK] = VK_CULL_MODE_FRONT_AND_BACK,
@@ -246,12 +247,15 @@ static int pipeline_graphics_init(struct pipeline *s, const struct pipeline_para
     };
 
     /* Rasterization */
+    VkCullModeFlags cull_mode = VK_CULL_MODE_NONE;
+    if (state->cull_face)
+        cull_mode = get_vk_cull_mode(state->cull_face_mode);
     VkPipelineRasterizationStateCreateInfo rasterization_state_create_info = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
         .polygonMode = VK_POLYGON_MODE_FILL,
         .lineWidth = 1.f,
-        .cullMode = get_vk_cull_mode(state->cull_face_mode),
-        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+        .cullMode = cull_mode,
+        .frontFace = VK_FRONT_FACE_CLOCKWISE,
     };
 
     /* Multisampling */
