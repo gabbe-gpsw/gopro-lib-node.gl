@@ -44,6 +44,7 @@ struct pipeline_texture {
     int type;
     int location;
     int binding;
+    int stage;
     struct texture *texture;
 };
 
@@ -51,6 +52,7 @@ struct pipeline_buffer {
     char name[MAX_ID_LEN];
     int type;
     int binding;
+    int stage;
     struct buffer *buffer;
 };
 
