@@ -290,6 +290,7 @@ static int inject_texture_info(struct pgcraft *s, int stage, struct pgcraft_text
                 .type     = field->type,
                 .location = -1,
                 .binding  = -1,
+                .stage    = stage,
                 .texture  = info->texture,
             };
             snprintf(pl_texture.name, sizeof(pl_texture.name), "%s", field->name);
@@ -365,6 +366,7 @@ static int inject_block(struct pgcraft *s, struct bstr *b, int stage,
     struct pipeline_buffer pl_buffer = {
         .type    = block->type,
         .binding = -1,
+        .stage   = stage,
         .buffer  = named_block->buffer,
     };
     snprintf(pl_buffer.name, sizeof(pl_buffer.name), "%s_block", named_block->name);
