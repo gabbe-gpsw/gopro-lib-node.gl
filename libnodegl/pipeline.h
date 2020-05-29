@@ -22,6 +22,7 @@
 #ifndef PIPELINE_H
 #define PIPELINE_H
 
+#include "block.h"
 #include "buffer.h"
 #include "darray.h"
 #include "graphicstate.h"
@@ -104,6 +105,13 @@ struct pipeline_params {
     int nb_buffers;
     const struct pipeline_attribute *attributes;
     int nb_attributes;
+
+    /*
+     * Uniform block info per stage; required if the pipeline doesn't support
+     * uniforms.
+     */
+    const struct block *ublock[NGLI_PROGRAM_SHADER_NB];
+    struct buffer *ubuffer[NGLI_PROGRAM_SHADER_NB];
 };
 
 struct pipeline {
@@ -118,6 +126,10 @@ struct pipeline {
     struct darray texture_descs;
     struct darray buffer_descs;
     struct darray attribute_descs;
+
+    const struct block *ublock[NGLI_PROGRAM_SHADER_NB];
+    struct buffer *ubuffer[NGLI_PROGRAM_SHADER_NB];
+    uint8_t *udata[NGLI_PROGRAM_SHADER_NB];
 
     void (*exec)(const struct pipeline *s, struct glcontext *gl);
 
