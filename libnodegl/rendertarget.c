@@ -87,30 +87,32 @@ static void blit_draw_buffers(struct rendertarget *s, int nb_color_attachments, 
     ngli_glDrawBuffers(gl, s->nb_color_attachments, s->draw_buffers);
 }
 
-int ngli_rendertarget_init(struct rendertarget *s, struct ngl_ctx *ctx, const struct rendertarget_params *params)
+static int create_fbo(struct glcontext *gl,
+                      int nb_colors,
+                      struct texture * const *colors,
+                      struct texture *depth_stencil,
+                      GLuint *fbo_idp,
+                      int *nb_color_attachmentsp)
 {
-    int ret = -1;
-    struct glcontext *gl = ctx->glcontext;
+    int ret = 0;
+    GLuint id = 0;
+    int nb_color_attachments = 0;
 
-    s->ctx = ctx;
-    s->width = params->width;
-    s->height = params->height;
+    ngli_glGenFramebuffers(gl, 1, &id);
+    ngli_glBindFramebuffer(gl, GL_FRAMEBUFFER, id);
 
-    ngli_glGenFramebuffers(gl, 1, &s->id);
-    ngli_glBindFramebuffer(gl, GL_FRAMEBUFFER, s->id);
-
-    s->nb_color_attachments = 0;
-    for (int i = 0; i < params->nb_colors; i++) {
-        const struct texture *attachment = params->colors[i];
+    for (int i = 0; i < nb_colors; i++) {
+        const struct texture *attachment = colors[i];
         GLenum attachment_index = get_gl_attachment_index(attachment->format);
         ngli_assert(attachment_index == GL_COLOR_ATTACHMENT0);
 
-        if (s->nb_color_attachments >= gl->max_color_attachments) {
+        if (nb_color_attachments >= gl->max_color_attachments) {
             LOG(ERROR, "could not attach color buffer %d (maximum %d)",
-                s->nb_color_attachments, gl->max_color_attachments);
+                nb_color_attachments, gl->max_color_attachments);
+            ret = NGL_ERROR_UNSUPPORTED;
             goto done;
         }
-        attachment_index = attachment_index + s->nb_color_attachments++;
+        attachment_index = attachment_index + nb_color_attachments++;
 
         switch (attachment->target) {
         case GL_RENDERBUFFER:
@@ -122,15 +124,15 @@ int ngli_rendertarget_init(struct rendertarget *s, struct ngl_ctx *ctx, const st
         case GL_TEXTURE_CUBE_MAP:
             for (int face = 0; face < 6; face++)
                 ngli_glFramebufferTexture2D(gl, GL_FRAMEBUFFER, attachment_index++, GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, attachment->id, 0);
-            s->nb_color_attachments += 5;
+            nb_color_attachments += 5;
             break;
         default:
             ngli_assert(0);
         }
     }
 
-    if (params->depth_stencil) {
-        const struct texture *attachment = params->depth_stencil;
+    if (depth_stencil) {
+        const struct texture *attachment = depth_stencil;
         const GLenum attachment_index = get_gl_attachment_index(attachment->format);
         ngli_assert(attachment_index != GL_COLOR_ATTACHMENT0);
 
@@ -152,9 +154,31 @@ int ngli_rendertarget_init(struct rendertarget *s, struct ngl_ctx *ctx, const st
     }
 
     if (ngli_glCheckFramebufferStatus(gl, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        LOG(ERROR, "framebuffer %u is not complete", s->id);
+        LOG(ERROR, "framebuffer %u is not complete", id);
         goto done;
     }
+
+    *fbo_idp = id;
+    *nb_color_attachmentsp = nb_color_attachments;
+
+    return 0;
+
+done:
+    ngli_glDeleteFramebuffers(gl, 1, &id);
+    return ret;
+}
+
+int ngli_rendertarget_init(struct rendertarget *s, struct ngl_ctx *ctx, const struct rendertarget_params *params)
+{
+    struct glcontext *gl = ctx->glcontext;
+
+    s->ctx = ctx;
+    s->width = params->width;
+    s->height = params->height;
+
+    int ret = create_fbo(gl, params->nb_colors, params->colors, params->depth_stencil, &s->id, &s->nb_color_attachments);
+    if (ret < 0)
+        goto done;
 
     s->blit = blit_no_draw_buffers;
     if (gl->features & NGLI_FEATURE_DRAW_BUFFERS) {
@@ -162,6 +186,7 @@ int ngli_rendertarget_init(struct rendertarget *s, struct ngl_ctx *ctx, const st
         if (s->nb_color_attachments > gl->max_draw_buffers) {
             LOG(ERROR, "draw buffer count (%d) exceeds driver limit (%d)",
                 s->nb_color_attachments, gl->max_draw_buffers);
+            ret = NGL_ERROR_UNSUPPORTED;
             goto done;
         }
         if (s->nb_color_attachments > 1) {
@@ -178,8 +203,6 @@ int ngli_rendertarget_init(struct rendertarget *s, struct ngl_ctx *ctx, const st
             s->blit = blit_draw_buffers;
         }
     }
-
-    ret = 0;
 
 done:;
     struct rendertarget *rt = ctx->rendertarget;
