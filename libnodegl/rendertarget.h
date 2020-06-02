@@ -34,6 +34,9 @@ struct rendertarget_params {
     int nb_colors;
     struct texture *colors[NGLI_MAX_COLOR_ATTACHMENTS];
     struct texture *depth_stencil;
+    int nb_resolve_colors;
+    struct texture *resolve_colors[NGLI_MAX_COLOR_ATTACHMENTS];
+    struct texture *resolve_depth_stencil;
 };
 
 struct rendertarget {
@@ -41,8 +44,10 @@ struct rendertarget {
     int width;
     int height;
     int nb_color_attachments;
+    int nb_resolve_color_attachments;
 
     GLuint id;
+    GLuint resolve_id;
     GLuint prev_id;
     GLenum draw_buffers[NGLI_MAX_COLOR_ATTACHMENTS];
     GLenum blit_draw_buffers[NGLI_MAX_COLOR_ATTACHMENTS*(NGLI_MAX_COLOR_ATTACHMENTS+1)/2];
@@ -51,6 +56,7 @@ struct rendertarget {
 
 int ngli_rendertarget_init(struct rendertarget *s, struct ngl_ctx *ctx, const struct rendertarget_params *params);
 void ngli_rendertarget_blit(struct rendertarget *s, struct rendertarget *dst, int vflip);
+void ngli_rendertarget_resolve(struct rendertarget *s, int vflip);
 void ngli_rendertarget_read_pixels(struct rendertarget *s, uint8_t *data);
 void ngli_rendertarget_reset(struct rendertarget *s);
 

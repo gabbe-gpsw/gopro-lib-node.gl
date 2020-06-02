@@ -170,13 +170,20 @@ done:
 
 int ngli_rendertarget_init(struct rendertarget *s, struct ngl_ctx *ctx, const struct rendertarget_params *params)
 {
+    int ret = 0;
     struct glcontext *gl = ctx->glcontext;
 
     s->ctx = ctx;
     s->width = params->width;
     s->height = params->height;
 
-    int ret = create_fbo(gl, params->nb_colors, params->colors, params->depth_stencil, &s->id, &s->nb_color_attachments);
+    if (params->nb_resolve_colors || params->depth_stencil) {
+        ret = create_fbo(gl, params->nb_resolve_colors, params->resolve_colors, params->resolve_depth_stencil, &s->resolve_id, &s->nb_resolve_color_attachments);
+        if (ret < 0)
+            goto done;
+    }
+
+    ret = create_fbo(gl, params->nb_colors, params->colors, params->depth_stencil, &s->id, &s->nb_color_attachments);
     if (ret < 0)
         goto done;
 
@@ -229,6 +236,26 @@ void ngli_rendertarget_blit(struct rendertarget *s, struct rendertarget *dst, in
     ngli_glBindFramebuffer(gl, GL_FRAMEBUFFER, fbo_id);
 }
 
+void ngli_rendertarget_resolve(struct rendertarget *s, int vflip)
+{
+    struct ngl_ctx *ctx = s->ctx;
+    struct glcontext *gl = ctx->glcontext;
+
+    if (!(gl->features & NGLI_FEATURE_FRAMEBUFFER_OBJECT))
+        return;
+
+    if (!s->nb_resolve_color_attachments)
+        return;
+
+    ngli_glBindFramebuffer(gl, GL_READ_FRAMEBUFFER, s->id);
+    ngli_glBindFramebuffer(gl, GL_DRAW_FRAMEBUFFER, s->resolve_id);
+    s->blit(s, s->nb_resolve_color_attachments, s->width, s->height, vflip);
+
+    struct rendertarget *rt = ctx->rendertarget;
+    const GLuint fbo_id = rt ? rt->id : ngli_glcontext_get_default_framebuffer(gl);
+    ngli_glBindFramebuffer(gl, GL_FRAMEBUFFER, fbo_id);
+}
+
 void ngli_rendertarget_read_pixels(struct rendertarget *s, uint8_t *data)
 {
     struct ngl_ctx *ctx = s->ctx;
@@ -253,6 +280,7 @@ void ngli_rendertarget_reset(struct rendertarget *s)
 
     struct glcontext *gl = ctx->glcontext;
     ngli_glDeleteFramebuffers(gl, 1, &s->id);
+    ngli_glDeleteFramebuffers(gl, 1, &s->resolve_id);
 
     memset(s, 0, sizeof(*s));
 }
