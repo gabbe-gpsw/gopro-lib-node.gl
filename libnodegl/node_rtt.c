@@ -50,7 +50,8 @@ struct rtt_priv {
     struct texture rt_depth;
 
     struct rendertarget rt_ms;
-    struct darray rt_ms_colors;
+    struct texture rt_ms_colors[NGLI_MAX_COLOR_ATTACHMENTS];
+    int rt_nb_ms_colors;
     struct texture rt_ms_depth;
 };
 
@@ -125,8 +126,6 @@ static int create_ms_rendertarget(struct ngl_node *node, int depth_format)
     struct ngl_ctx *ctx = node->ctx;
     struct rtt_priv *s = node->priv_data;
 
-    ngli_darray_init(&s->rt_ms_colors, sizeof(struct texture), 0);
-
     struct texture_params attachment_params = NGLI_TEXTURE_PARAM_DEFAULTS;
     attachment_params.width = s->width;
     attachment_params.height = s->height;
@@ -138,26 +137,27 @@ static int create_ms_rendertarget(struct ngl_node *node, int depth_format)
         .height = s->height,
     };
 
+    s->rt_nb_ms_colors = 0;
     for (int i = 0; i < s->nb_color_textures; i++) {
         const struct texture_priv *texture_priv = s->color_textures[i]->priv_data;
         const struct texture *texture = &texture_priv->texture;
         const struct texture_params *params = &texture->params;
         const int n = params->type == NGLI_TEXTURE_TYPE_CUBE ? 6 : 1;
         for (int i = 0; i < n; i++) {
-            struct texture *ms_texture = ngli_darray_push(&s->rt_ms_colors, NULL);
-            if (!ms_texture)
-                return NGL_ERROR_MEMORY;
+            if (s->rt_nb_ms_colors >= NGLI_MAX_COLOR_ATTACHMENTS) {
+                LOG(ERROR, "context does not support more than %d color attachments", NGLI_MAX_COLOR_ATTACHMENTS);
+                return NGL_ERROR_UNSUPPORTED;
+            }
+            struct texture *ms_texture = &s->rt_ms_colors[s->rt_nb_ms_colors];
             attachment_params.format = params->format;
             ret = ngli_texture_init(ms_texture, ctx, &attachment_params);
             if (ret < 0)
                 return ret;
-            if (rt_params.nb_colors >= NGLI_MAX_COLOR_ATTACHMENTS) {
-                LOG(ERROR, "context does not support more than 8 color attachments");
-                return NGL_ERROR_UNSUPPORTED;
-            }
-            rt_params.colors[rt_params.nb_colors++] = ms_texture;
+            rt_params.colors[s->rt_nb_ms_colors] = ms_texture;
+            s->rt_nb_ms_colors++;
         }
     }
+    rt_params.nb_colors = s->rt_nb_ms_colors;
 
     if (depth_format != NGLI_FORMAT_UNDEFINED) {
         attachment_params.format = depth_format;
@@ -375,10 +375,9 @@ static void rtt_release(struct ngl_node *node)
     ngli_texture_reset(&s->rt_depth);
 
     ngli_rendertarget_reset(&s->rt_ms);
-    struct texture *rt_ms_colors = ngli_darray_data(&s->rt_ms_colors);
-    for (int i = 0; i < ngli_darray_count(&s->rt_ms_colors); i++)
-        ngli_texture_reset(&rt_ms_colors[i]);
-    ngli_darray_reset(&s->rt_ms_colors);
+    for (int i = 0; i < s->rt_nb_ms_colors; i++)
+        ngli_texture_reset(&s->rt_ms_colors[i]);
+    s->rt_nb_ms_colors = 0;
     ngli_texture_reset(&s->rt_ms_depth);
 }
 
