@@ -38,6 +38,7 @@
 #include "nodegl.h"
 #include "nodes.h"
 #include "pipeline.h"
+#include "rendertarget.h"
 #include "texture.h"
 #include "texture_vk.h"
 #include "texture_vk.h"
@@ -259,9 +260,12 @@ static int pipeline_graphics_init(struct pipeline *s, const struct pipeline_para
     };
 
     /* Multisampling */
+    const struct rendertarget_desc *desc = &graphics->rt_desc;
+    const struct rendertarget_attachment_desc *attachment_desc = &desc->colors[0];
+    const VkSampleCountFlagBits samples = ngli_vk_get_sample_count(attachment_desc->samples);
     VkPipelineMultisampleStateCreateInfo multisampling_state_create_info = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+        .rasterizationSamples = samples,
     };
 
     /* Depth & stencil */
@@ -296,7 +300,7 @@ static int pipeline_graphics_init(struct pipeline *s, const struct pipeline_para
 
     /* Blend */
     VkPipelineColorBlendAttachmentState colorblend_attachment_states[NGLI_MAX_COLOR_ATTACHMENTS] = {0};
-    for (int i = 0; i < graphics->rt_desc.nb_color_formats; i++) {
+    for (int i = 0; i < graphics->rt_desc.nb_colors; i++) {
         colorblend_attachment_states[i] = (VkPipelineColorBlendAttachmentState) {
             .blendEnable = state->blend,
             .srcColorBlendFactor = get_vk_blend_factor(state->blend_src_factor),
@@ -311,7 +315,7 @@ static int pipeline_graphics_init(struct pipeline *s, const struct pipeline_para
 
     VkPipelineColorBlendStateCreateInfo colorblend_state_create_info = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-        .attachmentCount = graphics->rt_desc.nb_color_formats,
+        .attachmentCount = graphics->rt_desc.nb_colors,
         .pAttachments = colorblend_attachment_states,
     };
 
@@ -326,7 +330,6 @@ static int pipeline_graphics_init(struct pipeline *s, const struct pipeline_para
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
         .dynamicStateCount = NGLI_ARRAY_NB(dynamic_states),
         .pDynamicStates = dynamic_states,
-
     };
 
     const struct program *program = s->program;

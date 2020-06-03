@@ -195,6 +195,21 @@ int ngli_texture_init(struct texture *s,
         ngli_assert(0);
     }
 
+    VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
+    switch (params->samples) {
+    case 2:
+        samples = VK_SAMPLE_COUNT_2_BIT;
+        break;
+    case 4:
+        samples = VK_SAMPLE_COUNT_4_BIT;
+        break;
+    case 8:
+        samples = VK_SAMPLE_COUNT_8_BIT;
+        break;
+    default:
+        samples = VK_SAMPLE_COUNT_1_BIT;
+    }
+
     VkImageCreateInfo image_create_info = {
         .sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .imageType     = image_type,
@@ -207,7 +222,7 @@ int ngli_texture_init(struct texture *s,
         .tiling        = tiling,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
         .usage         = usage,
-        .samples       = VK_SAMPLE_COUNT_1_BIT,
+        .samples       = samples,
         .sharingMode   = VK_SHARING_MODE_EXCLUSIVE,
         .flags         = flags,
     };

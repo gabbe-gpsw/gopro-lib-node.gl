@@ -42,6 +42,7 @@ struct rendertarget_desc {
 struct rendertarget_params {
     int width;
     int height;
+    int samples;
     int nb_colors;
     struct texture *colors[NGLI_MAX_COLOR_ATTACHMENTS];
     struct texture *depth_stencil;
@@ -61,7 +62,7 @@ struct rendertarget {
 
 #ifdef VULKAN_BACKEND
     int nb_attachments;
-    VkImageView attachments[NGLI_MAX_COLOR_ATTACHMENTS + 1];
+    VkImageView attachments[2*(NGLI_MAX_COLOR_ATTACHMENTS + 1)];
     VkFramebuffer framebuffer;
     VkRenderPass render_pass;
     VkRenderPass conservative_render_pass;
@@ -74,6 +75,7 @@ struct rendertarget {
     GLenum draw_buffers[NGLI_MAX_COLOR_ATTACHMENTS];
     GLenum blit_draw_buffers[NGLI_MAX_COLOR_ATTACHMENTS*(NGLI_MAX_COLOR_ATTACHMENTS+1)/2];
     void (*blit)(struct rendertarget *s, int nb_color_attachments, int width, int height, int vflip);
+#endif
 };
 
 int ngli_rendertarget_init(struct rendertarget *s, struct ngl_ctx *ctx, const struct rendertarget_params *params);
@@ -83,5 +85,6 @@ void ngli_rendertarget_read_pixels(struct rendertarget *s, uint8_t *data);
 void ngli_rendertarget_reset(struct rendertarget *s);
 
 int ngli_vk_create_renderpass_info(struct ngl_ctx *ctx, const struct rendertarget_desc *desc, VkRenderPass *render_pass, int conservative);
+VkSampleCountFlagBits ngli_vk_get_sample_count(int samples);
 
 #endif

@@ -303,6 +303,7 @@ static int rtt_prefetch(struct ngl_node *node)
     struct rendertarget_params rt_params = {
         .width = s->width,
         .height = s->height,
+        .samples = s->samples,
     };
 
     if (s->samples > 0) {

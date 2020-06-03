@@ -1387,15 +1387,15 @@ static int vk_configure(struct ngl_ctx *s, const struct ngl_config *config)
     ngli_graphicstate_init(graphicstate);
 
     if (config->offscreen) {
-        s->default_rendertarget_desc.color_formats[0] = NGLI_FORMAT_R8G8B8A8_UNORM;
-        s->default_rendertarget_desc.nb_color_formats = 1;
-        s->default_rendertarget_desc.depth_stencil_format = vk->prefered_depth_stencil_format;
+        s->default_rendertarget_desc.nb_colors = 1;
+        s->default_rendertarget_desc.colors[0].format = NGLI_FORMAT_R8G8B8A8_UNORM;
+        s->default_rendertarget_desc.depth_stencil.format = vk->prefered_depth_stencil_format;
         s->rendertarget_desc = &s->default_rendertarget_desc;
         ngli_gctx_set_rendertarget(s, &vk->rt, 0);
     } else {
-        s->default_rendertarget_desc.color_formats[0] = NGLI_FORMAT_B8G8R8A8_UNORM;
-        s->default_rendertarget_desc.nb_color_formats = 1;
-        s->default_rendertarget_desc.depth_stencil_format = vk->prefered_depth_stencil_format;
+        s->default_rendertarget_desc.nb_colors = 1;
+        s->default_rendertarget_desc.colors[0].format = NGLI_FORMAT_B8G8R8A8_UNORM;
+        s->default_rendertarget_desc.depth_stencil.format = vk->prefered_depth_stencil_format;
         s->rendertarget_desc = &s->default_rendertarget_desc;
         ngli_gctx_set_rendertarget(s, NULL, 0);
     }

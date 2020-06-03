@@ -36,12 +36,17 @@ void ngli_gctx_vk_commit_render_pass(struct ngl_ctx *s)
 
     if (s->rendertarget) {
         struct rendertarget_params *params = &s->rendertarget->params;
-        for (int i = 0; i < params->nb_colors; i++) {
+        for (int i = 0; i < params->nb_colors; i++)
             ngli_texture_vk_transition_layout(params->colors[i], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-        }
 
         if (params->depth_stencil)
             ngli_texture_vk_transition_layout(params->depth_stencil, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
+        for (int i = 0; i < params->nb_resolve_colors; i++)
+            params->resolve_colors[i]->image_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+        if (params->resolve_depth_stencil)
+            params->resolve_depth_stencil->image_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
     }
 
     VkCommandBuffer cmd_buf = vk->cur_command_buffer;
