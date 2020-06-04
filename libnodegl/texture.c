@@ -310,6 +310,8 @@ static int is_pow2(int x)
 struct texture *ngli_texture_create(struct ngl_ctx *ctx)
 {
     struct texture *s = ngli_calloc(1, sizeof(*s));
+    if (!s)
+        return NULL;
     s->ctx = ctx;
     return s;
 }
