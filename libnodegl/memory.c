@@ -107,7 +107,7 @@ void ngli_free(void *ptr)
 void ngli_freep(void *ptr)
 {
     ngli_free(*(void **)ptr);
-    memset(ptr, 0, sizeof(ptr));
+    memset(ptr, 0, sizeof(void *));
 }
 
 void ngli_free_aligned(void *ptr)
