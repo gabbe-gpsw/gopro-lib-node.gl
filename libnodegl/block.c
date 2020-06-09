@@ -121,7 +121,7 @@ static int get_field_size(const struct block_field *field, int layout)
 
 static int get_field_align(const struct block_field *field, int layout)
 {
-    if (field->count && field->type != NGLI_TYPE_MAT4)
+    if (field->count && field->type != NGLI_TYPE_MAT3 && field->type != NGLI_TYPE_MAT4)
         return get_buffer_stride(field, layout);
     return aligns_map[field->type];
 }
@@ -154,6 +154,23 @@ int ngli_block_add_field(struct block *s, const char *name, int type, int count)
     s->size = offset + field.size;
 
     return 0;
+}
+
+void ngli_block_datacopy(const struct block_field *fi, uint8_t *dst, const uint8_t *src)
+{
+    const int src_stride = sizes_map[fi->type];
+    if (fi->type == NGLI_TYPE_MAT3) {
+        ngli_assert(fi->count == 0);
+        const int dst_vec_stride = fi->stride / 3;
+        const int src_vec_stride = sizes_map[NGLI_TYPE_VEC3];
+        for (int i = 0; i < 3; i++)
+            memcpy(dst + i * dst_vec_stride, src + i * src_vec_stride, src_vec_stride);
+    } else if (fi->count == 0 || src_stride == fi->stride) {
+        memcpy(dst, src, fi->size);
+    } else {
+        for (int i = 0; i < fi->count; i++)
+            memcpy(dst + i * fi->stride, src + i * src_stride, src_stride);
+    }
 }
 
 void ngli_block_reset(struct block *s)

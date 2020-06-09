@@ -704,22 +704,8 @@ int ngli_pipeline_update_uniform(struct pipeline *s, int index, const void *valu
     const struct block *block = s->ublock[stage];
     const struct block_field *field_info = ngli_darray_data(&block->fields);
     const struct block_field *fi = &field_info[field_index];
-    if (fi->type == NGLI_TYPE_MAT3) {
-        /* FIXME: special tactics */
-        const uint8_t *src = value;
-        uint8_t *dst = s->udata[stage] + fi->offset;
-        const int size = 3 * sizeof(float);
-        const int stride = 4 * sizeof(float);
-        for (int i = 0; i < 3; i ++) {
-            memcpy(dst, src, size);
-            dst += stride;
-            src += size;
-        }
-    } else {
-        uint8_t *dst = s->udata[stage] + fi->offset;
-        memcpy(dst, value, fi->size);
-    }
-
+    uint8_t *dst = s->udata[stage] + fi->offset;
+    ngli_block_datacopy(fi, dst, value);
     return 0;
 }
 
