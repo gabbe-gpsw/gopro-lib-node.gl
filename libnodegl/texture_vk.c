@@ -77,6 +77,7 @@ static int is_depth_format(VkFormat format)
 
 static VkImageAspectFlags get_vk_image_aspect_flags(VkFormat format)
 {
+    LOG(ERROR, "vk format: 0x%x", format);
     switch (format) {
     case VK_FORMAT_D16_UNORM:
     case VK_FORMAT_D32_SFLOAT:
