@@ -115,3 +115,13 @@ void ngli_gctx_invalidate_depth_stencil(struct ngl_ctx *s)
     static const GLenum attachments[] = {GL_DEPTH_ATTACHMENT, GL_STENCIL_ATTACHMENT};
     ngli_glInvalidateFramebuffer(gl, GL_FRAMEBUFFER, NGLI_ARRAY_NB(attachments), attachments);
 }
+
+int ngli_gctx_get_prefered_depth_format(struct ngl_ctx *s)
+{
+    return NGLI_FORMAT_D16_UNORM;
+}
+
+int ngli_gctx_get_prefered_depth_stencil_format(struct ngl_ctx *s)
+{
+    return NGLI_FORMAT_D24_UNORM_S8_UINT;
+}
