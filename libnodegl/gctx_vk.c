@@ -242,3 +242,14 @@ void ngli_gctx_flush(struct ngl_ctx *s)
     vk->wait_stages.count = 0;
     //vk->command_buffers.count = 0;
 }
+
+int ngli_gctx_get_prefered_depth_format(struct ngl_ctx *s)
+{
+    return NGLI_FORMAT_D16_UNORM;
+}
+
+int ngli_gctx_get_prefered_depth_stencil_format(struct ngl_ctx *s)
+{
+    struct vkcontext *vk = s->vkcontext;
+    return vk->prefered_depth_stencil_format;
+}
