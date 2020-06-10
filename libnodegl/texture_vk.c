@@ -530,6 +530,9 @@ int ngli_texture_upload(struct texture *s, const uint8_t *data, int linesize)
         ret = ngli_vk_execute_transient_command(vk, command_buffer);
         if (ret < 0)
             return ret;
+
+        if (ngli_texture_has_mipmap(s))
+            ngli_texture_generate_mipmap(s);
     }
 
     return 0;
