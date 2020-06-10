@@ -41,4 +41,7 @@ void ngli_gctx_invalidate_depth_stencil(struct ngl_ctx *s);
 
 void ngli_gctx_flush(struct ngl_ctx *s);
 
+int ngli_gctx_get_prefered_depth_format(struct ngl_ctx *s);
+int ngli_gctx_get_prefered_depth_stencil_format(struct ngl_ctx *s);
+
 #endif
