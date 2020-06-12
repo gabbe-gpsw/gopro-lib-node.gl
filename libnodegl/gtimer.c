@@ -29,8 +29,18 @@ static void noop(const struct glcontext *gl, ...)
 {
 }
 
-int ngli_gtimer_init(struct gtimer *s, struct ngl_ctx *ctx)
+struct gtimer *ngli_gtimer_create(struct ngl_ctx *ctx)
 {
+    struct gtimer *s = ngli_calloc(1, sizeof(*s));
+    if (!s)
+        return NULL;
+    s->ctx = ctx;
+    return s;
+}
+
+int ngli_gtimer_init(struct gtimer *s)
+{
+    struct ngl_ctx *ctx = s->ctx;
     struct glcontext *gl = ctx->glcontext;
 
     s->ctx = ctx;
@@ -100,12 +110,13 @@ int64_t ngli_gtimer_read(struct gtimer *s)
     return s->query_result;
 }
 
-void ngli_gtimer_reset(struct gtimer *s)
+void ngli_gtimer_freep(struct gtimer **sp)
 {
-    if (!s->ctx)
+    if (!*sp)
         return;
 
+    struct gtimer *s = *sp;
     struct glcontext *gl = s->ctx->glcontext;
     s->glDeleteQueries(gl, 1, &s->query);
-    memset(s, 0, sizeof(*s));
+    ngli_freep(sp);
 }
