@@ -22,6 +22,8 @@
 #include <string.h>
 
 #include "gctx.h"
+#include "nodes.h"
+#include "rendertarget.h"
 
 void ngli_gctx_set_rendertarget(struct ngl_ctx *s, struct rendertarget *rt)
 {

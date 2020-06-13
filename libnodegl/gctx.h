@@ -22,7 +22,8 @@
 #ifndef GCTX_H
 #define GCTX_H
 
-#include "nodes.h"
+struct ngl_ctx;
+struct rendertarget;
 
 void ngli_gctx_set_rendertarget(struct ngl_ctx *s, struct rendertarget *rt);
 struct rendertarget *ngli_gctx_get_rendertarget(struct ngl_ctx *s);
