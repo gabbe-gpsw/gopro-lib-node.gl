@@ -191,6 +191,13 @@ static int register_block(struct pass *s, const char *name, struct ngl_node *blo
         }
     }
 
+    if (!ngli_darray_push(&s->block_nodes, &block_node))
+        return NGL_ERROR_MEMORY;
+
+    int ret = ngli_node_block_ref(block_node);
+    if (ret < 0)
+        return ret;
+
     /*
      * Warning: the block type may be adjusted by another pass if the block
      * node is shared between them. This means shared crafter blocks must
@@ -207,13 +214,6 @@ static int register_block(struct pass *s, const char *name, struct ngl_node *blo
 
     if (!ngli_darray_push(&s->crafter_blocks, &crafter_block))
         return NGL_ERROR_MEMORY;
-
-    if (!ngli_darray_push(&s->block_nodes, &block_node))
-        return NGL_ERROR_MEMORY;
-
-    int ret = ngli_node_block_ref(block_node);
-    if (ret < 0)
-        return ret;
 
     return 0;
 }
