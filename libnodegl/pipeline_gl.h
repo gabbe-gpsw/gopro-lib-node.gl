@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 GoPro Inc.
+ * Copyright 2019 GoPro Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -19,26 +19,28 @@
  * under the License.
  */
 
-#ifndef BUFFER_H
-#define BUFFER_H
+#ifndef PIPELINE_GL_H
+#define PIPELINE_GL_H
+
+#include "pipeline.h"
+#include "glincludes.h"
 
 struct gctx;
+struct glcontext;
 
-enum {
-    NGLI_BUFFER_USAGE_STATIC,
-    NGLI_BUFFER_USAGE_DYNAMIC,
-    NGLI_BUFFER_USAGE_NB
+struct pipeline_gl {
+    struct pipeline parent;
+
+    void (*exec)(const struct pipeline *s, struct glcontext *gl);
+    uint64_t used_texture_units;
+    GLuint vao_id;
 };
 
-struct buffer {
-    struct gctx *gctx;
-    int size;
-    int usage;
-};
-
-struct buffer *ngli_buffer_create(struct gctx *gctx);
-int ngli_buffer_init(struct buffer *s, int size, int usage);
-int ngli_buffer_upload(struct buffer *s, const void *data, int size);
-void ngli_buffer_freep(struct buffer **sp);
+struct pipeline *ngli_pipeline_gl_create(struct gctx *gctx);
+int ngli_pipeline_gl_init(struct pipeline *s, const struct pipeline_params *params);
+int ngli_pipeline_gl_update_uniform(struct pipeline *s, int index, const void *value);
+int ngli_pipeline_gl_update_texture(struct pipeline *s, int index, struct texture *texture);
+void ngli_pipeline_gl_exec(struct pipeline *s);
+void ngli_pipeline_gl_freep(struct pipeline **sp);
 
 #endif
