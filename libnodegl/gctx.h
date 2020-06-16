@@ -29,9 +29,11 @@
 #include "features.h"
 #include "glcontext.h"
 #include "glstate.h"
+#include "gtimer.h"
 #include "limits.h"
 #include "nodegl.h"
 #include "pgcache.h"
+#include "pipeline.h"
 #include "rendertarget.h"
 #include "texture.h"
 
@@ -45,6 +47,56 @@ struct gctx_class {
     int (*pre_draw)(struct gctx *s, double t);
     int (*post_draw)(struct gctx *s, double t);
     void (*destroy)(struct gctx *s);
+
+    struct buffer *(*buffer_create)(struct gctx *ctx);
+    int (*buffer_init)(struct buffer *s, int size, int usage);
+    int (*buffer_upload)(struct buffer *s, const void *data, int size);
+    void (*buffer_freep)(struct buffer **sp);
+
+    void (*gctx_set_rendertarget)(struct gctx *s, struct rendertarget *rt);
+    struct rendertarget *(*gctx_get_rendertarget)(struct gctx *s);
+    void (*gctx_set_viewport)(struct gctx *s, const int *viewport);
+    void (*gctx_get_viewport)(struct gctx *s, int *viewport);
+    void (*gctx_set_scissor)(struct gctx *s, const int *scissor);
+    void (*gctx_get_scissor)(struct gctx *s, int *scissor);
+    void (*gctx_set_clear_color)(struct gctx *s, const float *color);
+    void (*gctx_get_clear_color)(struct gctx *s, float *color);
+    void (*gctx_clear_color)(struct gctx *s);
+    void (*gctx_clear_depth_stencil)(struct gctx *s);
+    void (*gctx_invalidate_depth_stencil)(struct gctx *s);
+
+    struct gtimer *(*gtimer_create)(struct gctx *ctx);
+    int (*gtimer_init)(struct gtimer *s);
+    int (*gtimer_start)(struct gtimer *s);
+    int (*gtimer_stop)(struct gtimer *s);
+    int64_t (*gtimer_read)(struct gtimer *s);
+    void (*gtimer_freep)(struct gtimer **sp);
+
+    struct pipeline *(*pipeline_create)(struct gctx *ctx);
+    int (*pipeline_init)(struct pipeline *s, const struct pipeline_params *params);
+    int (*pipeline_update_uniform)(struct pipeline *s, int index, const void *value);
+    int (*pipeline_update_texture)(struct pipeline *s, int index, struct texture *texture);
+    void (*pipeline_exec)(struct pipeline *s);
+    void (*pipeline_freep)(struct pipeline **sp);
+
+    struct program *(*program_create)(struct gctx *ctx);
+    int (*program_init)(struct program *s, const char *vertex, const char *fragment, const char *compute);
+    void (*program_freep)(struct program **sp);
+
+    struct rendertarget *(*rendertarget_create)(struct gctx *ctx);
+    int (*rendertarget_init)(struct rendertarget *s, const struct rendertarget_params *params);
+    void (*rendertarget_blit)(struct rendertarget *s, struct rendertarget *dst, int vflip);
+    void (*rendertarget_resolve)(struct rendertarget *s);
+    void (*rendertarget_read_pixels)(struct rendertarget *s, uint8_t *data);
+    void (*rendertarget_freep)(struct rendertarget **sp);
+
+    struct texture *(*texture_create)(struct gctx* ctx);
+    int (*texture_init)(struct texture *s, const struct texture_params *params);
+    int (*texture_has_mipmap)(const struct texture *s);
+    int (*texture_match_dimensions)(const struct texture *s, int width, int height, int depth);
+    int (*texture_upload)(struct texture *s, const uint8_t *data, int linesize);
+    int (*texture_generate_mipmap)(struct texture *s);
+    void (*texture_freep)(struct texture **sp);
 };
 
 typedef void (*capture_func_type)(struct gctx *s);
