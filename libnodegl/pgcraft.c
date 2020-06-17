@@ -932,12 +932,15 @@ static int probe_pipeline_elems(struct pgcraft *s)
 #define IS_GLSL_ES_MIN(min) (gl->backend == NGL_BACKEND_OPENGLES && s->glsl_version >= (min))
 #define IS_GLSL_MIN(min)    (gl->backend == NGL_BACKEND_OPENGL   && s->glsl_version >= (min))
 
-static void setup_glsl_info(struct pgcraft *s, const struct glcontext *gl)
+static void setup_glsl_info(struct pgcraft *s)
 {
+    struct ngl_ctx *ctx = s->ctx;
+    struct gctx *gctx = ctx->gctx;
+
     s->rg = "rg";
 
     if (gl->backend == NGL_BACKEND_OPENGL) {
-        switch (gl->version) {
+        switch (gctx->version) {
         case 300: s->glsl_version = 130;         break;
         case 310: s->glsl_version = 140;         break;
         case 320: s->glsl_version = 150;         break;
@@ -945,7 +948,7 @@ static void setup_glsl_info(struct pgcraft *s, const struct glcontext *gl)
         }
         s->glsl_version_suffix = "";
     } else if (gl->backend == NGL_BACKEND_OPENGLES) {
-        if (gl->version >= 300) {
+        if (gctx->version >= 300) {
             s->glsl_version = gl->version;
             s->glsl_version_suffix = " es";
         } else {
@@ -999,10 +1002,9 @@ struct pgcraft *ngli_pgcraft_create(struct ngl_ctx *ctx)
     if (!s)
         return NULL;
 
-    struct gctx *gctx = ctx->gctx;
-    setup_glsl_info(s, gctx->glcontext);
-
     s->ctx = ctx;
+
+    setup_glsl_info(s);
 
     ngli_darray_init(&s->texture_infos, sizeof(struct pgcraft_texture_info), 0);
 
