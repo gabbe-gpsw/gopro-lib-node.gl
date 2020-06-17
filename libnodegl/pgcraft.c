@@ -927,30 +927,30 @@ static int probe_pipeline_elems(struct pgcraft *s)
     return 0;
 }
 
-#define IS_GL_ES_MIN(min)   (gl->backend == NGL_BACKEND_OPENGLES && gl->version >= (min))
-#define IS_GL_MIN(min)      (gl->backend == NGL_BACKEND_OPENGL   && gl->version >= (min))
-#define IS_GLSL_ES_MIN(min) (gl->backend == NGL_BACKEND_OPENGLES && s->glsl_version >= (min))
-#define IS_GLSL_MIN(min)    (gl->backend == NGL_BACKEND_OPENGL   && s->glsl_version >= (min))
+#define IS_GL_ES_MIN(min)   (config->backend == NGL_BACKEND_OPENGLES && gctx->version >= (min))
+#define IS_GL_MIN(min)      (config->backend == NGL_BACKEND_OPENGL   && gctx->version >= (min))
+#define IS_GLSL_ES_MIN(min) (config->backend == NGL_BACKEND_OPENGLES && s->glsl_version >= (min))
+#define IS_GLSL_MIN(min)    (config->backend == NGL_BACKEND_OPENGL   && s->glsl_version >= (min))
 
 static void setup_glsl_info(struct pgcraft *s)
 {
     struct ngl_ctx *ctx = s->ctx;
+    struct ngl_config *config = &ctx->config;
     struct gctx *gctx = ctx->gctx;
-    struct glcontext *gl = gctx->glcontext;
 
     s->rg = "rg";
 
-    if (gl->backend == NGL_BACKEND_OPENGL) {
+    if (config->backend == NGL_BACKEND_OPENGL) {
         switch (gctx->version) {
         case 300: s->glsl_version = 130;         break;
         case 310: s->glsl_version = 140;         break;
         case 320: s->glsl_version = 150;         break;
-        default:  s->glsl_version = gl->version; break;
+        default:  s->glsl_version = gctx->version; break;
         }
         s->glsl_version_suffix = "";
-    } else if (gl->backend == NGL_BACKEND_OPENGLES) {
+    } else if (config->backend == NGL_BACKEND_OPENGLES) {
         if (gctx->version >= 300) {
-            s->glsl_version = gl->version;
+            s->glsl_version = gctx->version;
             s->glsl_version_suffix = " es";
         } else {
             s->glsl_version = 100;
