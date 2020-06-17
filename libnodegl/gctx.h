@@ -26,6 +26,7 @@
 #include <CoreVideo/CoreVideo.h>
 #endif
 
+#include "features.h"
 #include "glcontext.h"
 #include "glstate.h"
 #include "nodegl.h"
@@ -50,6 +51,7 @@ typedef void (*capture_func_type)(struct gctx *s);
 struct gctx {
     struct ngl_ctx *ctx;
     const struct gctx_class *class;
+    int features;
     struct glcontext *glcontext;
     struct glstate glstate;
     struct rendertarget *rendertarget;

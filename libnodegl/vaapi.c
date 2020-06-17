@@ -40,10 +40,10 @@ int ngli_vaapi_init(struct ngl_ctx *s)
     struct gctx *gctx = s->gctx;
     struct glcontext *gl = gctx->glcontext;
 
-    if (gl->features & NGLI_FEATURE_SOFTWARE)
+    if (gctx->features & NGLI_FEATURE_SOFTWARE)
         return -1;
 
-    if (!(gl->features & (NGLI_FEATURE_OES_EGL_IMAGE |
+    if (!(gctx->features & (NGLI_FEATURE_OES_EGL_IMAGE |
                           NGLI_FEATURE_EGL_IMAGE_BASE_KHR |
                           NGLI_FEATURE_EGL_EXT_IMAGE_DMA_BUF_IMPORT))) {
         LOG(ERROR, "context does not support required extensions for vaapi");
