@@ -936,6 +936,7 @@ static void setup_glsl_info(struct pgcraft *s)
 {
     struct ngl_ctx *ctx = s->ctx;
     struct gctx *gctx = ctx->gctx;
+    struct glcontext *gl = gctx->glcontext;
 
     s->rg = "rg";
 
