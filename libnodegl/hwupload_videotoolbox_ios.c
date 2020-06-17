@@ -35,6 +35,7 @@
 #include "memory.h"
 #include "nodegl.h"
 #include "nodes.h"
+#include "texture_gl.h"
 
 #define NGLI_CFRELEASE(ref) do { \
     if (ref) {                   \
@@ -132,8 +133,8 @@ static int vt_ios_map_plane(struct ngl_node *node, CVPixelBufferRef cvpixbuf, in
     ngli_glTexParameteri(gl, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t);
     ngli_glBindTexture(gl, GL_TEXTURE_2D, 0);
 
-    ngli_texture_set_id(plane, id);
-    ngli_texture_set_dimensions(plane, width, height, 0);
+    ngli_texture_gl_set_id(plane, id);
+    ngli_texture_gl_set_dimensions(plane, width, height, 0);
 
     return 0;
 }
@@ -243,7 +244,7 @@ static int vt_ios_init(struct ngl_node *node, struct sxplayer_frame *frame)
         if (!vt->planes[i])
             return NGL_ERROR_MEMORY;
 
-        ret = ngli_texture_wrap(vt->planes[i], &plane_params, 0);
+        ret = ngli_texture_gl_wrap(vt->planes[i], &plane_params, 0);
         if (ret < 0)
             return ret;
     }

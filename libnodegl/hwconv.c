@@ -51,6 +51,8 @@ static const struct pgcraft_iovar vert_out_vars[] = {
     {.name = "var_tex_coord", .type = NGLI_TYPE_VEC2},
 };
 
+#include "texture_gl.h" // FIXME
+
 int ngli_hwconv_init(struct hwconv *hwconv, struct ngl_ctx *ctx,
                      const struct image *dst_image,
                      const struct image_params *src_params)

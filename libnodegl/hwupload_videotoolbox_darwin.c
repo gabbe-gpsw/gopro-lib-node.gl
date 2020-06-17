@@ -36,6 +36,7 @@
 #include "math_utils.h"
 #include "nodegl.h"
 #include "nodes.h"
+#include "texture_gl.h"
 
 struct hwupload_vt_darwin {
     struct sxplayer_frame *frame;
@@ -73,7 +74,7 @@ static int vt_darwin_map_frame(struct ngl_node *node, struct sxplayer_frame *fra
 
         int width = IOSurfaceGetWidthOfPlane(surface, i);
         int height = IOSurfaceGetHeightOfPlane(surface, i);
-        ngli_texture_set_dimensions(plane, width, height, 0);
+        ngli_texture_gl_set_dimensions(plane, width, height, 0);
 
         CGLError err = CGLTexImageIOSurface2D(CGLGetCurrentContext(), plane->target,
                                               plane->internal_format, width, height,
