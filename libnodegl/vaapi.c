@@ -30,7 +30,6 @@
 #endif
 
 #include "gctx.h"
-#include "glcontext.h"
 #include "log.h"
 #include "nodes.h"
 #include "vaapi.h"
